@@ -74,6 +74,7 @@ namespace navigation
 
   Navigation::Navigation(const string &map_file, ros::NodeHandle *n) : odom_initialized_(false),
                                                                        localization_initialized_(false),
+                                                                       nav_goal_initialized_(false),
                                                                        robot_loc_(0, 0),
                                                                        robot_angle_(0),
                                                                        robot_vel_(0, 0),
@@ -408,10 +409,15 @@ namespace navigation
     if (!odom_initialized_)
       return;
 
+    if (!nav_goal_initialized_) {
+      SetNavGoal(Vector2f(-12.0, 18.0), 0.0);
+      nav_goal_initialized_ = true;
+    }
+
     if (!planner.AtGoal(robot_loc_)) {
-      // makeControlDecision();
-      drive_msg_.curvature = 0.5;
-      drive_msg_.velocity = 1.0;
+      makeControlDecision();
+      // drive_msg_.curvature = 0.5;
+      // drive_msg_.velocity = 1.0;
     } else {
       drive_msg_.velocity = 0.0;
     }

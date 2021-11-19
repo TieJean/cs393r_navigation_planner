@@ -112,6 +112,8 @@ class Navigation {
   bool odom_initialized_;
   // Whether localization has been initialized.
   bool localization_initialized_;
+  // Whether navigation goal has been initialized.
+  bool nav_goal_initialized_;
   // Current robot location.
   Eigen::Vector2f robot_loc_;
   // Current robot orientation.
