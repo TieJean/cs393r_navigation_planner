@@ -1,5 +1,6 @@
 import os
 import in_place
+import subprocess
 
 LUA_DIR = os.path.expanduser("~") + "/ut_automata/config/"
 # LUA_FILENAME = 'simulator.lua'
@@ -55,7 +56,7 @@ def generate_bagfiles():
             
 
 if __name__ == '__main__':
-    PARTICLE_FILTER_DIR = os.chdir("../") + "/"
+    PARTICLE_FILTER_DIR = str(os.chdir("../")) + "/"
     # change_lua(1.0, 2.0, 3.0)
     os.chdir(UT_AUTOMATA_DIR)
     os.system("./bin/simulator")
