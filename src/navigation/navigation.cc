@@ -409,8 +409,9 @@ namespace navigation
       return;
 
     if (!planner.AtGoal(robot_loc_)) {
-      makeControlDecision();
-      // drive_msg_.curvature = 0.0;
+      // makeControlDecision();
+      drive_msg_.curvature = 0.5;
+      drive_msg_.velocity = 1.0;
     } else {
       drive_msg_.velocity = 0.0;
     }
