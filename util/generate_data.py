@@ -39,15 +39,13 @@ def change_lua(laser_noise_stddev, angular_drift_rate, angular_error_rate):
 # angular_error_rate_cutoff = 10.0  # absolute value
 
 def generate_bagfiles():
-    laser_noise_stddev = [0]
-    angular_drift_rate = [0]
-    angular_error_rate = [0]
-    # laser_noise_stddev = [0, 0.01, 0.02, 0.05, 0.07, 0.1]
-    # angular_drift_rate = [0, 0.2, 0.3, 0.1, 1.5, 1.5]
-    # angular_error_rate = [0, 5.0, 7.0, 25.0, 5.0, 25.0]
+    # laser_noise_stddev = [0, 0.01]
+    # angular_drift_rate = [0, 0.2]
+    # angular_error_rate = [0, 5.0]
+    laser_noise_stddev = [0, 0.01, 0.02, 0.05, 0.07, 0.1]
+    angular_drift_rate = [0, 0.2, 0.3, 0.1, 1.5, 1.5]
+    angular_error_rate = [0, 5.0, 7.0, 25.0, 5.0, 25.0]
 
-    # os.chdir(UT_AUTOMATA_DIR)
-    # os.system(UT_AUTOMATA_DIR + "bin/simulator &")
     for laser_noise in laser_noise_stddev:
         for i in range(0, len(angular_drift_rate)):
             change_lua(laser_noise, angular_drift_rate[i], angular_error_rate[i])
@@ -58,41 +56,67 @@ def generate_bagfiles():
             proc_sim = subprocess.Popen([UT_AUTOMATA_DIR + "bin/simulator", "&"])
             # proc_sim = subprocess.Popen("exec " + UT_AUTOMATA_DIR + "bin/simulator &", shell=True)
             os.chdir(PARTICLE_FILTER_DIR + "bag/")
-            file_name = "laser" + laser_noise + "_drift" + angular_drift_rate[i] + "_error" + angular_error_rate[i]
-            os.system("rosbag record -a -O " + file_name + " --duration=20 &")
+            # laser, drift, error
+            filename = str(laser_noise) + "_" + str(angular_drift_rate[i]) + "_" + str(angular_error_rate[i])
+            # proc_bag = subprocess.Popen(["rosbag", "record", "-a", "-O", filename, "&"])
+            os.system("rosbag record -a -O " + filename + " --duration=15 &")
             # call rosbag play to record file
             try:
                 outs, errs = proc_sim.communicate(timeout=15)
                 outs, errs = proc_nav.communicate(timeout=15)
+                # outs, errs = proc_bag.communicate(timeout=15)
             except subprocess.TimeoutExpired:
                 proc_sim.kill()
                 proc_nav.kill()
-            time.sleep(25)
+                # proc_bag.kill()
+            time.sleep(5)
             
 
 if __name__ == '__main__':
     os.chdir("../")
     PARTICLE_FILTER_DIR = str(os.getcwd()) + "/"
-    # generate_bagfiles()
+    generate_bagfiles()
     # change_lua(1.0, 2.0, 3.0)
-    os.chdir(PARTICLE_FILTER_DIR)
-    proc_nav = subprocess.Popen([PARTICLE_FILTER_DIR + "bin/navigation", "&"])
-    os.chdir(UT_AUTOMATA_DIR)
-    proc_sim = subprocess.Popen([UT_AUTOMATA_DIR + "bin/simulator", "&"])
-    try:
-        outs, errs = proc_sim.communicate(timeout=1)
-        outs, errs = proc_nav.communicate(timeout=1)
-    except subprocess.TimeoutExpired:
-        print("before kill")
-        os.system("ps -aux | grep \"simulator\"")
-        os.system("ps -aux | grep \"navigation\"")
-        time.sleep(3)
-        proc_sim.kill()
-        proc_nav.kill()
-        print("after kill")
-        print("kill -9 " + str(proc_sim.pid), "kill -9 " + str(proc_nav.pid))
-        os.system("ps -aux | grep \"simulator\"")
-        os.system("ps -aux | grep \"navigation\"")
+
+    # for i in range(3):
+    #     os.chdir(PARTICLE_FILTER_DIR)
+    #     proc_nav = subprocess.Popen([PARTICLE_FILTER_DIR + "bin/navigation", "&"])
+    #     os.chdir(UT_AUTOMATA_DIR)
+    #     proc_sim = subprocess.Popen([UT_AUTOMATA_DIR + "bin/simulator", "&"])
+    #     os.chdir(PARTICLE_FILTER_DIR + "bag/")
+    #     filename = "test" + str(i)
+    #     proc_bag = subprocess.Popen(["rosbag", "record", "-a", "-O", filename, "--duration=3"])
+    #     # os.system("rosbag record -a -O " + file_name + " --duration=3 &")
+    #     try:
+    #         outs, errs = proc_nav.communicate(timeout=3)
+    #         outs, errs = proc_sim.communicate(timeout=3)
+    #         outs, errs = proc_bag.communicate(timeout=3)
+    #     except subprocess.TimeoutExpired:
+    #         print("TimeoutExpired\n")
+    #         proc_nav.kill()
+    #         proc_sim.kill()
+    #         proc_bag.kill()
+    #         os.system("ps -aux | grep \"simulator\"")
+    #         os.system("ps -aux | grep \"navigation\"")
+    #         os.system("ps -aux | grep \"rosbag\"")
+    #         time.sleep(1)
+    # os.system("ps -aux | grep \"simulator\"")
+    # os.system("ps -aux | grep \"navigation\"")
+    # os.system("ps -aux | grep \"rosbag\"")
+            
+    # os.chdir(PARTICLE_FILTER_DIR)
+    # proc_nav = subprocess.Popen([PARTICLE_FILTER_DIR + "bin/navigation", "&"])
+    # os.chdir(UT_AUTOMATA_DIR)
+    # proc_sim = subprocess.Popen([UT_AUTOMATA_DIR + "bin/simulator", "&"])
+    # os.chdir(PARTICLE_FILTER_DIR + "bag/")
+    # filename = "test"
+    # os.system("rosbag record -a -O " + filename + " --duration=5 &")
+    # try:
+    #     outs, errs = proc_sim.communicate(timeout=5)
+    #     outs, errs = proc_nav.communicate(timeout=5)
+    # except subprocess.TimeoutExpired:
+    #     proc_sim.kill()
+    #     proc_nav.kill()
     
             
 
