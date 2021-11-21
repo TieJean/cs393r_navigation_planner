@@ -39,12 +39,12 @@ def change_lua(laser_noise_stddev, angular_drift_rate, angular_error_rate):
 # angular_error_rate_cutoff = 10.0  # absolute value
 
 def generate_bagfiles():
-    # laser_noise_stddev = [0, 0.01]
-    # angular_drift_rate = [0, 0.2]
-    # angular_error_rate = [0, 5.0]
-    laser_noise_stddev = [0, 0.01, 0.02, 0.05, 0.07, 0.1]
-    angular_drift_rate = [0, 0.2, 0.3, 0.1, 1.5, 1.5]
-    angular_error_rate = [0, 5.0, 7.0, 25.0, 5.0, 25.0]
+    laser_noise_stddev = [0]
+    angular_drift_rate = [0]
+    angular_error_rate = [0]
+    # laser_noise_stddev = [0, 0.01, 0.02, 0.05, 0.07, 0.1]
+    # angular_drift_rate = [0, 0.2, 0.3, 0.1, 1.5, 1.5]
+    # angular_error_rate = [0, 5.0, 7.0, 25.0, 5.0, 25.0]
 
     for laser_noise in laser_noise_stddev:
         for i in range(0, len(angular_drift_rate)):
@@ -53,7 +53,7 @@ def generate_bagfiles():
             proc_nav = subprocess.Popen([PARTICLE_FILTER_DIR + "bin/navigation", "&"])
             # proc_nav = subprocess.Popen("exec " + PARTICLE_FILTER_DIR + "bin/navigation &", shell=True)
             os.chdir(UT_AUTOMATA_DIR)
-            proc_sim = subprocess.Popen([UT_AUTOMATA_DIR + "bin/simulator", "&"])
+            proc_sim = subprocess.Popen([UT_AUTOMATA_DIR + "bin/simulator", "--localize", "&"])
             # proc_sim = subprocess.Popen("exec " + UT_AUTOMATA_DIR + "bin/simulator &", shell=True)
             os.chdir(PARTICLE_FILTER_DIR + "bag/")
             # laser, drift, error
