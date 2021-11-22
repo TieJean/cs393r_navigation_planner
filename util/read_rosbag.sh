@@ -3,10 +3,10 @@
 cd ../bag
 for f in *.bag
 do
-    (rostopic echo /reference_localization > $f.yaml) &
+    (rostopic echo localization > $f.yaml) &
     topic_pid=$!
     sleep 1
-    time rosbag play --immediate $f --topics /reference_localization
+    time rosbag play --immediate $f --topics localization
     sleep 5
     kill -9 $topic_pid
     echo $!

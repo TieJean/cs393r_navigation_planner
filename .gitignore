@@ -3,5 +3,7 @@ build
 bin
 lib
 data
+bag/
+GDC1/
 *.bag
 util/venv
