@@ -1,8 +1,8 @@
 import os
-import in_place
+# import in_place
 import subprocess
-import signal
-import time
+# import signal
+# import time
 import random
 import shutil
 
@@ -119,7 +119,7 @@ if __name__ == '__main__':
     shutil.copy('obstacle-map-lines.txt', MAP_DIR)
     shutil.copy(MAP_DIR + MAP_FILENAME, MAP_DIR + "Original.vectormap.txt")
 
-    os.chdir("../../")
+    os.chdir("../")
     PARTICLE_FILTER_DIR = str(os.getcwd()) + "/"
     generate_bagfiles()
     # reset the map file

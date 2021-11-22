@@ -6,4 +6,5 @@ data
 bag/
 GDC1/
 *.bag
+*.yaml
 util/venv

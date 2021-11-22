@@ -1,6 +1,7 @@
 #!/bin/bash
 # cd ../bag/GDC1
 cd ../bag
+# cd ..
 for f in *.bag
 do
     (rostopic echo localization > $f.yaml) &
