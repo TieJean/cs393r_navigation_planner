@@ -1,9 +1,6 @@
 import yaml
 import os
 
-# rostopic echo /localization | tee test.yaml
-# time rosbag play --immediate test.bag --topics /localization
-
 BAG_YAML_DIR = "../bag/GDC1/"
 
 def parse_bag_yaml():
@@ -20,8 +17,8 @@ def parse_bag_yaml():
                 print(exc)
     return ret
 
-# if __name__ == '__main__':
-#     dictionaries = parse_bag_yaml()
-#     print(len(dictionaries))
-    # for dictionary in dictionaries:
-    #     print(dictionary)
+if __name__ == '__main__':
+    dictionaries = parse_bag_yaml()
+    print(len(dictionaries))
+    for dictionary in dictionaries:
+        print(dictionary)
