@@ -7,8 +7,8 @@ import random
 import shutil
 
 LUA_DIR = os.path.expanduser("~") + "/ut_automata/config/"
-# LUA_FILENAME = 'simulator.lua'
-LUA_FILENAME = 'test.lua'
+LUA_FILENAME = 'simulator.lua'
+# LUA_FILENAME = 'test.lua'
 UT_AUTOMATA_DIR = os.path.expanduser("~") + "/ut_automata/"
 MAP_DIR = os.path.expanduser("~") + "/amrl_maps/GDC1/"
 MAP_FILENAME = 'GDC1.vectormap.txt'
@@ -44,8 +44,8 @@ def change_lua(laser_noise_stddev, angular_drift_rate, angular_error_rate):
 
 def change_map(have_obstacles):
     os.chdir(MAP_DIR)
-    original = open("Original.vectormap.txt")
-    obstacles = open("obstacle-map-lines.txt")
+    original = open("Original.vectormap.txt", "r")
+    obstacles = open("obstacle-map-lines.txt", "r")
     if have_obstacles == 0: # no obstacles
         with open(MAP_FILENAME,'r+') as myfile:
             data = myfile.read()
@@ -54,16 +54,22 @@ def change_map(have_obstacles):
             myfile.truncate()
         myfile.close()
     elif have_obstacles == 1: # full obstacles
-        with open(MAP_FILENAME,'w') as myfile:
+        with open(MAP_FILENAME,'r+') as myfile:
+            data = myfile.read()
+            myfile.seek(0)
             myfile.write(obstacles.read())
             myfile.write(original.read())
+            myfile.truncate()
         myfile.close()
     else:
-        with open(MAP_FILENAME,'w') as myfile:
+        with open(MAP_FILENAME,'r+') as myfile:
+            data = myfile.read()
+            myfile.seek(0)
             obstacle_lines = list(obstacles)
             for _ in range(0, 8):
                 myfile.write(random.choice(obstacle_lines))
             myfile.write(original.read())
+            myfile.truncate()
         myfile.close()
     original.close()
     obstacles.close()
@@ -74,9 +80,10 @@ def generate_bagfiles():
     # laser_noise_stddev = [0, 0.01]
     # angular_drift_rate = [0, 0.2]
     # angular_error_rate = [0, 5.0]
-    laser_noise_stddev = [0, 0.01, 0.02, 0.05, 0.07, 0.1]
-    angular_drift_rate = [0, 0.2, 0.3, 0.1, 1.5, 1.5]
-    angular_error_rate = [0, 5.0, 7.0, 25.0, 5.0, 25.0]
+    laser_noise_stddev = [0, 0.02, 0.07, 0.1]
+    angular_drift_rate = [0, 0.2, 1.0, 2.5]
+    angular_error_rate = [0, 5.0, 20.0, 45.0]
+    obstacle_map = [0, 1, 2] # no obstacles, many obstacles, some obstacles
 
     for laser_noise in laser_noise_stddev:
         for i in range(0, len(angular_drift_rate)):
@@ -89,15 +96,15 @@ def generate_bagfiles():
                 os.chdir(UT_AUTOMATA_DIR)
                 proc_sim = subprocess.Popen([UT_AUTOMATA_DIR + "bin/simulator", "--localize", "&"])
                 # proc_sim = subprocess.Popen("exec " + UT_AUTOMATA_DIR + "bin/simulator &", shell=True)
-                os.chdir(PARTICLE_FILTER_DIR + "bag/")
+                os.chdir(PARTICLE_FILTER_DIR + "bag2/")
                 # laser, drift, error
-                filename = str(laser_noise) + "_" + str(angular_drift_rate[i]) + "_" + str(angular_error_rate[i])
+                filename = str(laser_noise) + "_" + str(angular_drift_rate[i]) + "_" + str(angular_error_rate[i]) + "_" + str(map_val)
                 # proc_bag = subprocess.Popen(["rosbag", "record", "-a", "-O", filename, "&"])
-                os.system("rosbag record -a -O " + filename + " --duration=40 &")
+                os.system("rosbag record -a -O " + filename + " --duration=30 &")
                 # call rosbag play to record file
                 try:
-                    outs, errs = proc_sim.communicate(timeout=40)
-                    outs, errs = proc_nav.communicate(timeout=40)
+                    outs, errs = proc_sim.communicate(timeout=30)
+                    outs, errs = proc_nav.communicate(timeout=30)
                     # outs, errs = proc_bag.communicate(timeout=15)
                 except subprocess.TimeoutExpired:
                     proc_sim.kill()
@@ -112,9 +119,11 @@ if __name__ == '__main__':
     shutil.copy('obstacle-map-lines.txt', MAP_DIR)
     shutil.copy(MAP_DIR + MAP_FILENAME, MAP_DIR + "Original.vectormap.txt")
 
-    os.chdir("../")
+    os.chdir("../../")
     PARTICLE_FILTER_DIR = str(os.getcwd()) + "/"
-    # generate_bagfiles()
+    generate_bagfiles()
+    # reset the map file
+    change_map(0)
     # change_lua(1.0, 2.0, 3.0)
 
     # for i in range(3):
