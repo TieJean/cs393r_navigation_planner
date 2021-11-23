@@ -12,12 +12,16 @@ def generate_pf_file():
         proc_pf = subprocess.Popen([PARTICLE_FILTER_DIR + "bin/particle_filter", "&"])
         os.chdir(BAG_DIR)
         new_filename = "pf_" + filename
+        os.system("rosbag filter " + filename + " filtered_" + filename + " \"topic!=\'localization\'\"")
         os.system("rosbag record localization odom scan -O " + new_filename + " --duration=5 &") # TODO
         try:
-            outs, errs = proc_pf.communicate(timeout=5) # TODO
+            print("before pf")
+            outs, errs = proc_pf.communicate(timeout=10) # TODO
+            print("after pf")
             os.chdir(BAG_DIR)
-            os.system("rosbag play " + filename + " &")
+            os.system("rosbag play filtered_" + filename + " &")
         except subprocess.TimeoutExpired:
+            print("execption reached")
             proc_pf.kill()
         time.sleep(5)
 
