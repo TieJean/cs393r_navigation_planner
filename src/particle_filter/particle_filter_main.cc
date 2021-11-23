@@ -257,7 +257,13 @@ int main(int argc, char** argv) {
       n.advertise<amrl_msgs::Localization2DMsg>("localization", 1);
   laser_publisher_ =
       n.advertise<sensor_msgs::LaserScan>("scan", 1);
-
+  
+  const Vector2f init_loc(-34.0, 20.0);
+  const float init_angle = 0;
+  const string map = "maps/GDC1.txt";
+  particle_filter_.Initialize(map, init_loc, init_angle);
+  trajectory_points_.clear();
+  
   ProcessLive(&n);
 
   return 0;
