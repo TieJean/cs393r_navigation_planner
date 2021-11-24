@@ -38,6 +38,15 @@ def change_params(obs_std):
     # TODO add more params once this is confirmed working
     return
 
+# determines if a file is in a context based on its filename
+def file_in_context(filename, context):
+    filename = filename.split('_')
+    laser = float(filename[0]) <= context['laser_noise_cutoff']
+    drift = float(filename[1]) <= context['angular_drift_cutoff']
+    error = float(filename[2]) <= context['angular_error_cutoff']
+    obstacle_map = int(filename[3]) == context['obstacle_map']
+    return laser and drift and error and obstacle_map
+
 # finds the best parameters for a particular bag file
 # context is a dictionary with cutoffs for each noise level
 '''
@@ -61,30 +70,46 @@ def find_best_params(context):
     best_dist = 1000000
     best_params = []
     for std in obs_std:
+        dist = 0
         for filename in os.listdir(BAG_YAML_DIR):
-            if (not filename.endswith(".yaml")) or filename[:2] == "pf":
-                continue
             # determine if this file belongs to this context
-
-
+            if (not filename.endswith(".yaml")) or filename[:2] == "pf" or not file_in_context(filename):
+                continue
+            
             change_params(std) # TODO: add more params
             os.system("./generate_pf_file.sh --filename", bag_filename) # TODO: Change this method to accept a single bag file
             os.system("./read_rosbag.sh --filename", bag_filename) # generates yaml TODO: change this too
             locs = parse_bag_yaml(bag_filename + ".yaml")
-            dist = compute_distance(locs)
+            dist += compute_distance(locs)
 
-            if dist < best_dist:
-                best_dist = dist
-                best_params = [std]
+        if dist < best_dist:
+            best_dist = dist
+            best_params = [std]
 
     return best_params
 
+# loops through all contexts and finds the best parameters
+# then writes the best params to 
+def find_best_params_all_contexts():
+    return
 
 if __name__ == '__main__':
     for filename in os.listdir(BAG_YAML_DIR):
-        if (not filename.endswith(".yaml")) or filename[:2] == "pf":
+        if (not filename.endswith(".yaml")) or filename[:8] == "filtered" or filename[:2] == "pf":
             continue
         dictionaries = parse_bag_yaml(filename)
     print(len(dictionaries))
-    # for dictionary in dictionaries:
-    #     print(dictionary)
+    dictionary = dictionaries[0]
+    print(dictionary[0]["pose"]["x"], dictionary[0]["pose"]["y"], dictionary[0]["pose"]["theta"])
+    print(dictionary[1]["pose"]["x"], dictionary[1]["pose"]["y"], dictionary[1]["pose"]["theta"])
+    diff = []
+    for dictionary in dictionaries:
+        # print(dictionary)
+        if (dictionary[0] and dictionary[1]):
+            actual = dictionary[0]["pose"]
+            predicted = dictionary[1]["pose"]
+            diff.append((actual["x"] - predicted["x"], actual["y"] - predicted["y"], actual["theta"] - predicted["theta"]))
+            # diff.append((dictionary[0]["pose"]["x"] - dictionary[1]["pose"]["x"], dictionary[0]["pose"]["y"] - dictionary[1]["pose"]["y"], dictionary[0]["pose"]["theta"] - dictionary[1]["pose"]["theta"]))
+            # print(actual["x"], actual["y"], actual["theta"])
+            # print(predicted["x"], predicted["y"], predicted["theta"])
+    print(len(diff))
