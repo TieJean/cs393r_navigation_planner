@@ -6,6 +6,17 @@ from math import hypot
 BAG_YAML_DIR = "../"
 
 # returns an array of tuples, where each value in the tuple is a dictionary with data for 1 timestamp
+def yaml2dict(filename):
+    ret = []
+    with open(os.path.join(BAG_YAML_DIR, filename), "r") as stream:
+        try:
+            dictionaries = yaml.safe_load_all(stream)
+            for dictionary in dictionaries:
+                ret.append(dictionary)
+        except yaml.YAMLError as exc:
+            print(exc)
+    return ret
+
 def parse_bag_yaml(filename):
     ret = []
     with open(os.path.join(BAG_YAML_DIR, filename), "r") as stream1:
