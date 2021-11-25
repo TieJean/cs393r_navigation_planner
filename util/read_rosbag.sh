@@ -2,7 +2,15 @@
 # cd ../bag/GDC1
 cd ../bag
 # cd ..
-for f in *.bag
+filenames="*.bag"
+while getopts "f:" opt
+do
+    case "$opt" in
+        f) filenames=${OPTARG};;
+    esac
+done
+
+for f in $filenames
 do
     (rostopic echo localization > $f.yaml) &
     topic_pid=$!
