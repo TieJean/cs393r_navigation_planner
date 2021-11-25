@@ -8,3 +8,4 @@ GDC1/
 *.bag
 *.yaml
 util/venv
+util/__pycache__/
