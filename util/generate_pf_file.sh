@@ -3,11 +3,19 @@ prefix="pf_"
 
 cd ..
 PF_DIR=$(pwd)
-cd bag
+# cd bag
 BAG_DIR=$(pwd)
 
 cd $BAG_DIR
-for f in *.bag
+filenames="*.bag"
+while getopts "f:" opt
+do
+    case "$opt" in
+        f) filenames=${OPTARG};;
+    esac
+done
+
+for f in $filenames
 do
     rosbag filter $f tmp.bag "topic!='localization'"
     sleep 1
