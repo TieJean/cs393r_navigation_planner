@@ -2,11 +2,31 @@ import yaml
 import os
 from math import hypot
 import in_place
+from enum import Enum
 
 # BAG_YAML_DIR = "../bag/GDC1/"
 BAG_YAML_DIR = "../"
 LUA_DIR = "../config/"
 LUA_FILENAME = "particle_filter.lua"
+
+LASER_NOISE_CUTOFF = 0.03
+ANGULAR_DRIFT_CUTOFF = 0.5  # absolute value
+ANGULAR_ERROR_CUTOFF = 10.0 # absolute value
+
+class Context(Enum):
+    '''
+    Sensor:   Low Sensor noise,      High Sensor noise
+    Motion:   Low Motion noise,      High Motion noise
+    Obstacle: Low (sparse) Obstacle, High (dense) Obstacle
+    '''
+    LS_LM_LO = 0
+    LS_LM_HO = 1
+    LS_HM_LO = 2
+    LS_HM_HO = 3
+    HS_LM_LO = 4
+    HS_LM_HO = 5
+    HS_HM_LO = 6
+    HS_HM_HO = 7
 
 # returns an array of tuples, where each value in the tuple is a dictionary with data for 1 timestamp
 def yaml2dict(filename):
@@ -24,8 +44,8 @@ def parse_bag_yaml(filename):
     ret = []
     with open(os.path.join(BAG_YAML_DIR, filename), "r") as stream1:
         with open(os.path.join(BAG_YAML_DIR, "pf_" + filename), "r") as stream2:
-            print(filename)
-            print("pf_" + filename)
+            # print(filename)
+            # print("pf_" + filename)
             try:
                 dictionaries1 = yaml.safe_load_all(stream1)
                 dictionaries2 = yaml.safe_load_all(stream2)
@@ -65,14 +85,36 @@ def change_params(obs_std):
                 fp.write(line)
     fp.close()
 
-# determines if a file is in a context based on its filename
 def file_in_context(filename, context):
+    '''
+    Determines if a file is in a context based on its filename.
+    '''
     filename = filename.split('_')
-    laser = float(filename[0]) <= context['laser_noise_cutoff']
-    drift = float(filename[1]) <= context['angular_drift_cutoff']
-    error = float(filename[2]) <= context['angular_error_cutoff']
-    obstacle_map = int(filename[3].split('.')[0]) == context['obstacle_map']
-    return laser and drift and error and obstacle_map
+    
+    # check if the file contains certain noises
+    laser = float(filename[0]) > LASER_NOISE_CUTOFF
+    drift = abs(float(filename[1])) > ANGULAR_DRIFT_CUTOFF
+    error = abs(float(filename[2])) > ANGULAR_ERROR_CUTOFF
+    obstacle = int(filename[3].split('.')[0]) == 1  # dense: 1, sparse: 0 and 2
+    
+    if (context == Context.LS_LM_LO):
+        return not laser and not (drift or error) and not obstacle
+    elif (context == Context.LS_LM_HO):
+        return not laser and not (drift or error) and obstacle
+    elif (context == Context.LS_LM_LO):
+        return not laser and (drift or error) and not obstacle
+    elif (context == Context.LS_LM_LO):
+        return not laser and (drift or error) and obstacle
+    elif (context == Context.LS_LM_LO):
+        return laser and not (drift or error) and not obstacle
+    elif (context == Context.LS_LM_HO):
+        return laser and not (drift or error) and obstacle
+    elif (context == Context.LS_LM_LO):
+        return laser and (drift or error) and not obstacle
+    elif (context == Context.LS_LM_LO):
+        return laser and (drift or error) and obstacle
+    else:
+        return False
 
 # finds the best parameters for a particular bag file
 # context is a dictionary with cutoffs for each noise level
@@ -116,12 +158,21 @@ def find_best_params(context):
 
     return best_params
 
-# loops through all contexts and finds the best parameters
-# then writes the best params to 
 def find_best_params_all_contexts():
+    '''
+    Find the best params for each context.
+    '''
+    file = open("best_params.txt", "w")
+    for context in Context:
+        file.write(context.name + "\n")
+        best_params = find_best_params(context)
+        file.write(str(best_params) + "\n\n")
+    file.close()
     return
 
 if __name__ == '__main__':
+    find_best_params_all_contexts()
+
     # for filename in os.listdir(BAG_YAML_DIR):
     #     if (not filename.endswith(".yaml")) or filename[:8] == "filtered" or filename[:2] == "pf":
     #         continue
