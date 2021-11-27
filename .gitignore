@@ -9,3 +9,4 @@ GDC1/
 *.yaml
 util/venv
 util/__pycache__/
+util/checkpoints
