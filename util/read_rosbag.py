@@ -149,10 +149,13 @@ def find_best_params(context):
         if len(lines) > 0:
             checkpoint = lines[-1].split()
             if len(checkpoint) > 7:
-                best_dist  = float(checkpoint[-1])
+                tmp = lines[-1].split()
             else:
                 tmp = lines[-2].split()
-                best_dist  = float(tmp[-1])
+            if float(tmp[-3]) < float(tmp[-1]):
+                best_dist = float(tmp[-3])
+            else:
+                best_dist = float(tmp[-1])
         fp.close()
     fp = open(CHECKPOINT + context.name + ".txt", 'a+')
 
