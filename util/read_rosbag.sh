@@ -1,7 +1,7 @@
 #!/bin/bash
 # cd ../bag/GDC1
-# cd ../bag
-cd ..
+cd ../bag
+# cd ..
 filenames="*.bag"
 while getopts "f:" opt
 do

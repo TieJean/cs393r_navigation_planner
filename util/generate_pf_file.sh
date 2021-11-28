@@ -3,7 +3,7 @@ prefix="pf_"
 
 cd ..
 PF_DIR=$(pwd)
-# cd bag
+cd bag
 BAG_DIR=$(pwd)
 
 cd $BAG_DIR

@@ -77,9 +77,6 @@ def change_map(have_obstacles):
 
 
 def generate_bagfiles():
-    # laser_noise_stddev = [0, 0.01]
-    # angular_drift_rate = [0, 0.2]
-    # angular_error_rate = [0, 5.0]
     laser_noise_stddev = [0, 0.02, 0.07, 0.1]
     angular_drift_rate = [0, 0.2, 1.0, 2.5]
     angular_error_rate = [0, 5.0, 20.0, 45.0]
