@@ -159,6 +159,7 @@ def find_best_params(context):
     # motion_a_k1s = [0.1]
     # motion_a_k2s = [0.5]
     # num_particles = [30, 50, 80]
+    
     obs_std  = [0.05, 0.1, 0.15, 0.2]
     d_longs  = [1.5, 2.0, 2.0, 2.5]
     d_shorts = [1.0, 1.0, 1.5, 2.0]
@@ -167,14 +168,15 @@ def find_best_params(context):
     motion_a_k1s = [0.1, 0.3, 0.5, 0.7]
     motion_a_k2s = [0.5, 1.0, 1.5, 2.0]
     best_params = []
+
     for std, (d_long, d_short), motion_dist_k1, motion_dist_k2, motion_a_k1, motion_a_k2 in \
                 itertools.product(obs_std, zip(d_longs, d_shorts), motion_dist_k1s, motion_dist_k2s, motion_a_k1s, motion_a_k2s):
         if checkpoint is not None:
-            if std <= float(checkpoint[0]) and d_long <= float(checkpoint[1]) \
-                and motion_dist_k1 <= float(checkpoint[3]) and motion_dist_k2 <= float(checkpoint[4]) \
-                and motion_a_k1 <= float(checkpoint[5]) and motion_a_k2 <= float(checkpoint[6]):
+            if std < float(checkpoint[0]) or d_long < float(checkpoint[1]) \
+                or motion_dist_k1 < float(checkpoint[3]) or motion_dist_k2 < float(checkpoint[4]) \
+                or motion_a_k1 < float(checkpoint[5]) or motion_a_k2 < float(checkpoint[6]):
                 continue
-        fp.write(str(std) + " " + str(d_long) + " " + str(d_short) \
+        fp.write("\n" + str(std) + " " + str(d_long) + " " + str(d_short) \
                 + " " + str(motion_dist_k1) + " " + str(motion_dist_k2) \
                 + " " + str(motion_a_k1) + " " + str(motion_a_k2)) 
         d_long *= std
@@ -187,14 +189,27 @@ def find_best_params(context):
                 continue
             change_params(std, d_long, d_short, motion_dist_k1, motion_dist_k2, motion_a_k1, motion_a_k2) 
             os.system("./generate_pf_file.sh -f " + filename)
+            time.sleep(0.5)
             os.system("./read_rosbag.sh -f " + filename) # generates yaml
             os.system("./read_rosbag.sh -f " + "pf_" + filename) # generates yaml
             locs1 = yaml2dict(BAG_YAML_DIR + filename + ".yaml")
             locs2 = yaml2dict(BAG_YAML_DIR + "pf_" + filename + ".yaml")
+            retry = 0
+            while retry < 3 and (len(locs1) == 0 or len(locs2) == 0):
+                if len(locs1) == 0:
+                    print("retry " + filename)
+                if len(locs2) == 0:
+                    print("retry " + "pf_" + filename)
+                
+                os.system("./read_rosbag.sh -f " + filename) # generates yaml
+                os.system("./read_rosbag.sh -f " + "pf_" + filename) # generates yaml
+                locs1 = yaml2dict(BAG_YAML_DIR + filename + ".yaml")
+                locs2 = yaml2dict(BAG_YAML_DIR + "pf_" + filename + ".yaml")
+                retry += 1
             dist += compute_distance(locs1, locs2)
             time.sleep(1)
         
-        fp.write(" - " + str(dist) + " " + str(best_dist) + "\n")
+        fp.write(" - " + str(dist) + " " + str(best_dist))
         if dist < best_dist:
             best_dist = dist
             best_params = [std, d_long, d_short, motion_dist_k1, motion_dist_k2, motion_a_k1, motion_a_k2]
