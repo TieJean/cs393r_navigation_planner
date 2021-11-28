@@ -17,6 +17,7 @@ done
 
 for f in $filenames
 do
+    rm -f tmp.bag
     rosbag filter $f tmp.bag "topic!='localization'"
     sleep 1
     (rosbag record localization odom scan -O $prefix$f --duration=30) &

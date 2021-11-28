@@ -6,6 +6,7 @@ from enum import Enum
 import itertools
 from os.path import exists
 import time
+import statistics
 
 # BAG_YAML_DIR = "../bag/GDC1/"
 BAG_YAML_DIR = "../bag/"
@@ -147,7 +148,11 @@ def find_best_params(context):
         lines = fp.readlines()
         if len(lines) > 0:
             checkpoint = lines[-1].split()
-            best_dist  = float(checkpoint[-1])
+            if len(checkpoint) > 7:
+                best_dist  = float(checkpoint[-1])
+            else:
+                tmp = lines[-2].split()
+                best_dist  = float(tmp[-1])
         fp.close()
     fp = open(CHECKPOINT + context.name + ".txt", 'a+')
 
@@ -161,12 +166,12 @@ def find_best_params(context):
     # num_particles = [30, 50, 80]
     
     obs_std  = [0.05, 0.1, 0.15, 0.2]
-    d_longs  = [1.5, 2.0, 2.0, 2.5]
-    d_shorts = [1.0, 1.0, 1.5, 2.0]
-    motion_dist_k1s = [0.1, 0.3, 0.5, 0.7]
-    motion_dist_k2s = [0.05, 0.15, 0.25, 0.35]
-    motion_a_k1s = [0.1, 0.3, 0.5, 0.7]
-    motion_a_k2s = [0.5, 1.0, 1.5, 2.0]
+    d_longs  = [1.5, 2.0, 2.0, 2.5, 2.5]
+    d_shorts = [1.0, 1.0, 1.5, 2.0, 1.0]
+    motion_dist_k1s = [0.1, 0.3, 0.5]
+    motion_dist_k2s = [0.05, 0.15, 0.25]
+    motion_a_k1s = [0.1, 0.3, 0.5]
+    motion_a_k2s = [0.5, 1.0, 1.5]
     best_params = []
 
     for std, (d_long, d_short), motion_dist_k1, motion_dist_k2, motion_a_k1, motion_a_k2 in \
@@ -181,7 +186,7 @@ def find_best_params(context):
                 + " " + str(motion_a_k1) + " " + str(motion_a_k2)) 
         d_long *= std
         d_short *= std
-        dist = 0
+        dist = []
         for filename in os.listdir(BAG_YAML_DIR):
             # determine if this file belongs to this context
             if (not filename.endswith(".bag")) or filename[:2] == "pf" \
@@ -200,18 +205,17 @@ def find_best_params(context):
                     print("retry " + filename)
                 if len(locs2) == 0:
                     print("retry " + "pf_" + filename)
-                
                 os.system("./read_rosbag.sh -f " + filename) # generates yaml
                 os.system("./read_rosbag.sh -f " + "pf_" + filename) # generates yaml
                 locs1 = yaml2dict(BAG_YAML_DIR + filename + ".yaml")
                 locs2 = yaml2dict(BAG_YAML_DIR + "pf_" + filename + ".yaml")
                 retry += 1
-            dist += compute_distance(locs1, locs2)
+            dist.append(compute_distance(locs1, locs2))
             time.sleep(1)
         
-        fp.write(" - " + str(dist) + " " + str(best_dist))
-        if dist < best_dist:
-            best_dist = dist
+        fp.write(" - " + str(statistics.mean(dist)) + " " +  str(statistics.pstdev(dist)) + " " + str(best_dist))
+        if statistics.mean(dist) < best_dist:
+            best_dist = statistics.mean(dist)
             best_params = [std, d_long, d_short, motion_dist_k1, motion_dist_k2, motion_a_k1, motion_a_k2]
     fp.close()
     return best_params
@@ -221,7 +225,7 @@ def find_best_params_all_contexts():
     '''
     Find the best params for each context.
     '''
-    file = open("best_params.txt", "w")
+    file = open("best_params.txt", "a")
     for context in Context:
         file.write(context.name + "\n")
         best_params = find_best_params(context)

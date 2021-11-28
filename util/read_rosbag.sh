@@ -15,9 +15,11 @@ do
     (rostopic echo localization > $f.yaml) &
     topic_pid=$!
     sleep 1
+    # bash --rcfile <(echo "time rosbag play --immediate $f --topics localization")
     time rosbag play --immediate $f --topics localization
     sleep 5
-    kill -9 $topic_pid
+    kill -2 $topic_pid
+    sleep 1
     echo $!
     ps -aux | grep "rostopic"
     sleep 1
