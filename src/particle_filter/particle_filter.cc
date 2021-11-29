@@ -37,7 +37,7 @@
 #include "particle_filter.h"
 
 #include "vector_map/vector_map.h"
-#include "auto_tune.h"
+// #include "auto_tune.h"
 
 using geometry::line2f;
 using std::cout;
@@ -53,7 +53,7 @@ using std::sin;
 using std::cos;
 using amrl_msgs::VisualizationMsg;
 
-using namespace auto_tune;
+// using namespace auto_tune;
 
 DEFINE_uint32(num_particles, 50, "Number of particles");
 
