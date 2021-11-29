@@ -238,7 +238,7 @@ def find_best_params_all_contexts():
 
 if __name__ == '__main__':
     file = open("best_params.txt", "w")
-    best_params = find_best_params(Context.HS_HM_HO)
-    file.write("LS_LM_LO\n")
+    best_params = find_best_params(Context.HS_LM_HO)
+    file.write("HS_LM_HO\n")
     file.write(str(best_params) + "\n")
     file.close()
