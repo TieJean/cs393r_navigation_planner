@@ -37,6 +37,7 @@
 #include "particle_filter.h"
 
 #include "vector_map/vector_map.h"
+#include "auto_tune.h"
 
 using geometry::line2f;
 using std::cout;
@@ -52,20 +53,22 @@ using std::sin;
 using std::cos;
 using amrl_msgs::VisualizationMsg;
 
+using namespace auto_tune;
+
 DEFINE_uint32(num_particles, 50, "Number of particles");
 
 CONFIG_FLOAT(GAMMA, "GAMMA");
-CONFIG_FLOAT(SENSOR_STD_DEV, "SENSOR_STD_DEV");
-CONFIG_FLOAT(D_SHORT, "D_SHORT");
-CONFIG_FLOAT(D_LONG, "D_LONG");
+// CONFIG_FLOAT(SENSOR_STD_DEV, "SENSOR_STD_DEV");
+// CONFIG_FLOAT(D_SHORT, "D_SHORT");
+// CONFIG_FLOAT(D_LONG, "D_LONG");
 CONFIG_FLOAT(P_OUTSIDE_RANGE, "P_OUTSIDE_RANGE");
 CONFIG_FLOAT(MOTION_X_STD_DEV, "MOTION_X_STD_DEV");
 CONFIG_FLOAT(MOTION_Y_STD_DEV, "MOTION_Y_STD_DEV");
 CONFIG_FLOAT(MOTION_A_STD_DEV, "MOTION_A_STD_DEV");
-CONFIG_FLOAT(MOTION_DIST_K1, "MOTION_DIST_K1");
-CONFIG_FLOAT(MOTION_DIST_K2, "MOTION_DIST_K2");
-CONFIG_FLOAT(MOTION_A_K1, "MOTION_A_K1");
-CONFIG_FLOAT(MOTION_A_K2, "MOTION_A_K2");
+// CONFIG_FLOAT(MOTION_DIST_K1, "MOTION_DIST_K1");
+// CONFIG_FLOAT(MOTION_DIST_K2, "MOTION_DIST_K2");
+// CONFIG_FLOAT(MOTION_A_K1, "MOTION_A_K1");
+// CONFIG_FLOAT(MOTION_A_K2, "MOTION_A_K2");
 CONFIG_FLOAT(MAX_D_DIST, "MAX_D_DIST");
 CONFIG_FLOAT(MAX_D_ANGLE, "MAX_D_ANGLE");
 
@@ -169,7 +172,7 @@ void ParticleFilter::GetPredictedPointCloud(const Vector2f& loc,
 }
 
 // returns the log likelihood of x in a Gaussian distribution
-float calculateLogGaussian(float mean, float x, float stddev, float range_min, float range_max) {
+float ParticleFilter::calculateLogGaussian(float mean, float x, float stddev, float range_min, float range_max) {
   // remember we don't want to use 0 outside the window
   if (x < range_min || x > range_max) {
     return CONFIG_P_OUTSIDE_RANGE;
