@@ -1,11 +1,13 @@
 #include <vector>
 #include <string>
 
+#include "vector_map/vector_map.h"
 
 #ifndef SRC_AUTO_TUNE_H_
 #define SRC_AUTO_TUNE_H_
 
 using namespace std;
+using namespace vector_map;
 
 namespace auto_tune {
 
@@ -40,21 +42,56 @@ class AutoTune {
 public:
   AutoTune();
   // calls the three private methods and changes the parameters
-  void DetectContext();
-
+  Parameter DetectContext(vector_map::VectorMap map,
+                          const Vector2f& loc,
+                          const float angle,
+                          const vector<float>& ranges,
+                          float range_min,
+                          float range_max,
+                          float angle_min,
+                          float angle_max);
 private:
+  vector_map::VectorMap map_;
   const string BEST_PARAMS_FILE = "config/best_params.txt";
   // holds the context name and best set of parameters we pre-computed
-  vector<Context> contexts;
-  
+  vector<Context> contexts;  // TODO: change this to a map
+  const Eigen::Vector2f kLaserLoc = Eigen::Vector2f(0.2, 0);
+  const float HORIZON = 36.0;
+  const float OBSTACLE_CUTOFF = 0.25;
+  const float OBSERVATION_CUTOFF = 0.25;
+  const float DOWNSAMPLE_RATE = 20;
+
   // loads in the best params for each context from best_params.txt
   void LoadContexts_();
   // detects whether the current context is high or low observation noise
-  void DetectObservationContext_();
+  Parameter DetectObservationContext_(vector_map::VectorMap map,
+                                      const Vector2f& loc,
+                                      const float angle,
+                                      const vector<float>& ranges,
+                                      float range_min,
+                                      float range_max,
+                                      float angle_min,
+                                      float angle_max);
   // detects whether the current context is high or low motion noise
   void DetectMotionContext_();
-  // detects whether the current context has many or few obstacles
+  // detects whether the current context has many or few obstacles 
   void DetectObstacleContext_();
+  // calculate the stadard deviation of a point cloud sengment distribution
+  float getPointDistStddev_(vector_map::VectorMap map_,
+                         const Vector2f& loc,
+                         const float angle,
+                         const vector<float>& ranges,
+                         float range_min,
+                         float range_max,
+                         float angle_step,
+                         size_t start, size_t end);
+  bool IsObstacle_(vector_map::VectorMap map_,
+                const Vector2f& loc,
+                const float angle,
+                const float angle_i,
+                const float range_i,
+                const float range_min,
+                const float range_max);
 };
 
 
