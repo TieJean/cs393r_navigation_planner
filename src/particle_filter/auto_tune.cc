@@ -58,19 +58,22 @@ Parameter AutoTune::DetectContext(vector_map::VectorMap map,
                                   float range_max,
                                   float angle_min,
                                   float angle_max) {
-  return DetectObservationContext_(map, loc, angle, ranges, range_min, range_max, angle_min, angle_max);
+  // return DetectObservationContext_(map, loc, angle, ranges, range_min, range_max, angle_min, angle_max);
+  return DetectObstacleContext_(map, loc, angle, ranges, range_min, range_max, angle_min, angle_max);
   // TODO: add obstacle and motion noises
   // seperate obstabcles vs walls
   // for all obstacles: DetectObstacleContext_()
   // for point clouds on walls: 
 }
 
+/*
 VectorXf linearRegression(const VectorXf& x, const VectorXf& y, size_t length) {
   VectorXf ones(length);
   MatrixXf A(ones, x);
   // return A.colPivHouseholderQr().solve(y);
   return A.fullPivHouseholderQr().solve(y); // slow but stable
 }
+*/
 
 /*
  * loc_ab and angle_ab is the position of frame A in frame B.
@@ -88,7 +91,7 @@ void TransformAToB(const Vector2f& loc_ab, float angle_ab,
   new_angle = angle_ab + angle_pa;
 }
 
-Parameter AutoTune::DetectObservationContext_(vector_map::VectorMap map,
+Parameter AutoTune::DetectObservationContext_(const vector_map::VectorMap& map,
                                               const Vector2f& loc,
                                               const float angle,
                                               const vector<float>& ranges,
@@ -118,7 +121,7 @@ Parameter AutoTune::DetectObservationContext_(vector_map::VectorMap map,
 }
 
 // does linear regression on the segment and returns the standard deviation from the regression line
-float AutoTune::getPointDistStddev_(vector_map::VectorMap map_,
+float AutoTune::getPointDistStddev_(const vector_map::VectorMap& map_,
                          const Vector2f& loc,
                          const float angle,
                          const vector<float>& ranges,
@@ -126,23 +129,23 @@ float AutoTune::getPointDistStddev_(vector_map::VectorMap map_,
                          float range_max,
                          float angle_step,
                          size_t start, size_t end) {
-  size_t downsample_rate = 20;
   vector<Vector2f> points;
   for (size_t i = start; i < end; i += DOWNSAMPLE_RATE) {
     if (IsObstacle_(map_, loc, angle, i * angle_step, ranges[i], range_min, range_max)) { continue; }
     // points
     
   }
+  return 0.0; // TODO: fix me
 }
 
 // determines if a single point is an obstacle or not
-bool AutoTune::IsObstacle_(vector_map::VectorMap map_,
-                          const Vector2f& loc,
-                          const float angle,
-                          const float angle_i,
-                          const float range_i,
-                          const float range_min,
-                          const float range_max) {
+bool AutoTune::IsObstacle_(const vector_map::VectorMap& map_,
+                           const Vector2f& loc,
+                           const float angle,
+                           const float angle_i,
+                           const float range_i,
+                           const float range_min,
+                           const float range_max) {
   // Get laser frame's position relative to the map frame.
   Rotation2Df r(angle);
   Vector2f kLaserLoc(0.2, 0);
@@ -172,11 +175,12 @@ bool AutoTune::IsObstacle_(vector_map::VectorMap map_,
   // Get closest interesction
   Vector2f intersection_point_tmp (0.0, 0.0);
   line2f intersection_line;
-  bool intersects = false;
+  bool has_intersection = false;
   for (size_t j = 0; j < map_.lines.size(); ++j) {
     const line2f map_line = map_.lines[j];
-    intersects = map_line.Intersection(laser_line, &intersection_point_tmp);
+    bool intersects = map_line.Intersection(laser_line, &intersection_point_tmp);
     if (!intersects) continue;
+    else has_intersection = true;
     
     bool closer = false;
     if (abs(intersection_point_tmp.x() - mLaserLoc.x()) < abs(intersection_point.x() - mLaserLoc.x()) ) {
@@ -198,10 +202,11 @@ bool AutoTune::IsObstacle_(vector_map::VectorMap map_,
   float angle_loc = 0.0;
   TransformAToB(mLaserLoc, mLaserAngle, v, angle_i, &laser_loc, &angle_loc);
 
-  if (intersects) {
+  if (has_intersection) {
+    // cout << "intersects" << endl;
     // 1) calculate distance to intersection line to determine if obstacle
     Vector2f projected_point = ProjectPointOntoLineSegment(laser_loc, intersection_line.p0, intersection_line.p1);
-    if ((projected_point - laser_loc).norm() >= OBSTACLE_CUTOFF)
+    if ((projected_point - laser_loc).norm() >= OBSTACLE_DIST_CUTOFF)
       return true;
   }
   return false;
@@ -211,18 +216,43 @@ void AutoTune::DetectMotionContext_() {
 
 }
 
-void AutoTune::DetectObstacleContext_() {
+Parameter AutoTune::DetectObstacleContext_(const vector_map::VectorMap& map,
+                                           const Vector2f& loc,
+                                           const float angle,
+                                           const vector<float>& ranges,
+                                           float range_min,
+                                           float range_max,
+                                           float angle_min,
+                                           float angle_max) {
+  float angle_step = (angle_max - angle_min) / ranges.size();
   
+  size_t num_obstacles = 0;
+  float angle_i;
+  for (size_t i = 0; i < ranges.size(); i += DOWNSAMPLE_RATE) {
+    angle_i = angle_min + i * angle_step;
+    if (IsObstacle_(map, loc, angle, angle_i, ranges[i], range_min, range_max))
+      num_obstacles++;
+  }
+  
+  // cout << "obs: " << num_obstacles << " total: " << ranges.size() / DOWNSAMPLE_RATE << endl;
+  // cout << (float) num_obstacles / (ranges.size() / DOWNSAMPLE_RATE) << endl;
+  if ((float) num_obstacles / (ranges.size() / DOWNSAMPLE_RATE) < OBSTACLE_CUTOFF) {
+    // LS_LM_LO
+    // cout << "LS_LM_LO" << endl;
+    return contexts[0].param;
+  } else {
+    // LS_LM_HO
+    // cout << "LS_LM_HO" << endl;
+    return contexts[1].param;
+  }
 }
-
-
 
 } // namespace auto_tune
 
-int main() {
-  cout << "Auto" << endl;
-  auto_tune::AutoTune autoTune;
-  return 0;
-}
+// int main() {
+//   cout << "Auto" << endl;
+//   auto_tune::AutoTune autoTune;
+//   return 0;
+// }
 
 

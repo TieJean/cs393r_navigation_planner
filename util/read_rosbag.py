@@ -237,8 +237,13 @@ def find_best_params_all_contexts():
 
 
 if __name__ == '__main__':
-    file = open("best_params.txt", "w")
-    best_params = find_best_params(Context.HS_HM_HO)
-    file.write("LS_LM_LO\n")
-    file.write(str(best_params) + "\n")
-    file.close()
+    # file = open("best_params.txt", "w")
+    # best_params = find_best_params(Context.HS_HM_HO)
+    # file.write("LS_LM_LO\n")
+    # file.write(str(best_params) + "\n")
+    # file.close()
+    locs1 = yaml2dict(BAG_YAML_DIR + "0_0_0_1.bag.yaml")
+    locs2 = yaml2dict(BAG_YAML_DIR + "auto_0_0_0_1.bag.yaml")
+    locs3 = yaml2dict(BAG_YAML_DIR + "pf_0_0_0_1.bag.yaml")
+    print("Distance for autotune", compute_distance(locs1, locs2))
+    print("Distance for no autotune", compute_distance(locs1, locs3))

@@ -46,13 +46,13 @@ TARGET_LINK_LIBRARIES(slam shared_library ${libs})
 
 ROSBUILD_ADD_EXECUTABLE(particle_filter
                         src/particle_filter/particle_filter_main.cc
-                        src/particle_filter/particle_filter.cc)
-                        # src/particle_filter/auto_tune.cc)
+                        src/particle_filter/particle_filter.cc
+                        src/particle_filter/auto_tune.cc)
 TARGET_LINK_LIBRARIES(particle_filter shared_library ${libs})
 
-ROSBUILD_ADD_EXECUTABLE(auto_tune
-                        src/particle_filter/auto_tune.cc)
-TARGET_LINK_LIBRARIES(auto_tune shared_library ${libs})
+# ROSBUILD_ADD_EXECUTABLE(auto_tune
+#                         src/particle_filter/auto_tune.cc)
+# TARGET_LINK_LIBRARIES(auto_tune shared_library ${libs})
 
 ROSBUILD_ADD_EXECUTABLE(navigation
                         src/navigation/navigation_main.cc

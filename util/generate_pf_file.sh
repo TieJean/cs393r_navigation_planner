@@ -1,5 +1,5 @@
 #!/bin/bash
-prefix="pf_"
+prefix="auto_"
 
 cd ..
 PF_DIR=$(pwd)

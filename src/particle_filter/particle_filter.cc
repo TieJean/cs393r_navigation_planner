@@ -53,7 +53,7 @@ using std::sin;
 using std::cos;
 using amrl_msgs::VisualizationMsg;
 
-// using namespace auto_tune;
+using namespace auto_tune;
 
 DEFINE_uint32(num_particles, 50, "Number of particles");
 
@@ -77,6 +77,7 @@ namespace particle_filter {
 config_reader::ConfigReader config_reader_({"config/particle_filter.lua"});
 
 ParticleFilter::ParticleFilter() :
+    autoTune(),
     prev_odom_loc_(-1000, -1000),
     prev_odom_angle_(-1000),
     odom_initialized_(false) {
@@ -253,6 +254,21 @@ void ParticleFilter::ObserveLaser(const vector<float>& ranges,
   // This should only do anything when the robot has moved 0.15m or rotated 10 degrees
   if (d_dist < CONFIG_MAX_D_DIST && d_angle < CONFIG_MAX_D_ANGLE)
     return;
+  
+  // FINAL PROJECT CODE: Changes params during runtime
+  if (auto_tune) {
+    Vector2f loc;
+    float angle;
+    GetLocation(&loc, &angle);
+    Parameter p = autoTune.DetectContext(map_, loc, angle, ranges, range_min, range_max, angle_min, angle_max);
+    CONFIG_SENSOR_STD_DEV = p.sensor_std;
+    CONFIG_D_SHORT        = p.sensor_std * p.d_short;
+    CONFIG_D_LONG         = p.sensor_std * p.d_long;
+    CONFIG_MOTION_DIST_K1 = p.motion_dist_k1;
+    CONFIG_MOTION_DIST_K2 = p.motion_dist_k2;
+    CONFIG_MOTION_A_K1    = p.motion_a_k1;
+    CONFIG_MOTION_A_K2    = p.motion_a_k2;
+  }
   
   d_dist = 0.0;
   d_angle = 0.0;

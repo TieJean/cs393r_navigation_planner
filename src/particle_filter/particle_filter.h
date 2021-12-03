@@ -28,10 +28,12 @@
 #include "shared/util/random.h"
 #include "vector_map/vector_map.h"
 #include "amrl_msgs/VisualizationMsg.h"
+#include "auto_tune.h"
 
 #ifndef SRC_PARTICLE_FILTER_H_
 #define SRC_PARTICLE_FILTER_H_
 
+using namespace auto_tune;
 using amrl_msgs::VisualizationMsg;
 
 namespace particle_filter {
@@ -92,6 +94,7 @@ class ParticleFilter {
 
  private:
   // List of particles being tracked.
+  AutoTune autoTune;
   std::vector<Particle> particles_;
 
   // Map of the environment.
@@ -115,13 +118,14 @@ class ParticleFilter {
   bool updated;
 
   // auto-tuned params
-  float CONFIG_SENSOR_STD_DEV = 0.05;
-  float CONFIG_D_SHORT = 0.05 * 1.5;
-  float CONFIG_D_LONG = 0.05 * 2.0;
-  float CONFIG_MOTION_DIST_K1 = 0.1;
-  float CONFIG_MOTION_DIST_K2 = 0.25;
-  float CONFIG_MOTION_A_K1 = 0.5;
-  float CONFIG_MOTION_A_K2 = 1.5;
+  bool auto_tune = true;
+  float CONFIG_SENSOR_STD_DEV = 0.1;
+  float CONFIG_D_SHORT = 0.1 * 1.5;
+  float CONFIG_D_LONG = 0.1 * 2.0;
+  float CONFIG_MOTION_DIST_K1 = 0.3;
+  float CONFIG_MOTION_DIST_K2 = 0.05;
+  float CONFIG_MOTION_A_K1 = 0.1;
+  float CONFIG_MOTION_A_K2 = 1.0;
   
   float calculateLogGaussian(float mean, float x, float stddev, float range_min, float range_max);
 };
