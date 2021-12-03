@@ -65,8 +65,8 @@ private:
   // ratio of obstacles over all observation point cloud
   const float OBSTACLE_CUTOFF = 0.1;
   const float MOTION_CUTOFF = 0.1;
-  const float OBSERVATION_CUTOFF = 0.25;
-  const float DOWNSAMPLE_RATE = 20;
+  const float OBSERVATION_CUTOFF = 0.03;
+  const float DOWNSAMPLE_RATE = 10;
 
   // loads in the best params for each context from best_params.txt
   void LoadContexts_();
@@ -105,6 +105,7 @@ private:
                             float range_min,
                             float range_max,
                             float angle_step,
+                            float angle_min,
                             size_t start, size_t end);
   float CalculateDistanceToWall_(const vector_map::VectorMap& map_,
                                  const Vector2f& loc,

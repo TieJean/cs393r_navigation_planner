@@ -1,13 +1,16 @@
 #include <fstream>
+#include <algorithm>
 #include <iostream>
 #include <bits/stdc++.h>
 #include "eigen3/Eigen/Dense"
+#include "shared/util/random.h"
 
 #include "auto_tune.h"
 
 using namespace std;
 using namespace Eigen;
 using namespace geometry;
+using namespace util_random;
 
 namespace auto_tune {
 
@@ -58,13 +61,51 @@ Parameter AutoTune::DetectContext(const vector_map::VectorMap& map,
                                   float range_max,
                                   float angle_min,
                                   float angle_max) {
-  // return DetectObservationContext_(map, loc, angle, ranges, range_min, range_max, angle_min, angle_max);
+  return DetectObservationContext_(map, loc, angle, ranges, range_min, range_max, angle_min, angle_max);
   // return DetectObstacleContext_(map, loc, angle, ranges, range_min, range_max, angle_min, angle_max);
-  return DetectMotionContext_(map, loc, angle, ranges, range_min, range_max, angle_min, angle_max);
+  // return DetectMotionContext_(map, loc, angle, ranges, range_min, range_max, angle_min, angle_max);
   // TODO: add obstacle and motion noises
   // seperate obstabcles vs walls
   // for all obstacles: DetectObstacleContext_()
   // for point clouds on walls: 
+
+  // float angle_step = (angle_max - angle_min) / ranges.size();
+  // // segment points from scan
+  // size_t segments = (angle_max - angle_min) / (M_PI / 180 * 5);
+  // size_t segment_size = ranges.size() / segments;
+  // float sum_stddev = 0.0;
+  // segments = 0;
+  // size_t num_obstacles = 0;
+  // float angle_i;
+  // for (size_t start = 0; start < ranges.size(); start += segment_size) {
+  //   size_t end = start + segment_size > ranges.size() ? ranges.size() : start + segment_size;
+  //   sum_stddev += getPointDistStddev_(map, loc, angle, ranges, range_min, range_max, angle_step, start, end);
+    // for (size_t i = start; i < end; i += DOWNSAMPLE_RATE) {
+    //   angle_i = angle_min + i * angle_step;
+    //   float dist = CalculateDistanceToWall_(map, loc, angle, angle_i, ranges[i], range_min, range_max);
+    //   if (dist != -1 && dist >= OBSTACLE_DIST_CUTOFF)
+    //     num_obstacles++;
+      
+    // }
+  //   ++segments;
+  // }
+  // bool observation = sum_stddev / segments >= OBSERVATION_CUTOFF;
+  // bool obstacle = (float) num_obstacles / (ranges.size() / DOWNSAMPLE_RATE) >= OBSTACLE_CUTOFF;
+  // if (!observation && !obstacle) {
+  //   // LS_LM_LO
+  //   return contexts[0].param;
+  // } else if (observation && !obstacle) {
+  //   // HS_LM_LO
+  //   return contexts[4].param;
+  // } else if (!observation && obstacle) {
+  //   // LS_LM_HO
+  //   // cout << "LS_LM_HO" << endl;
+  //   return contexts[1].param;
+  // } else {
+  //   // HS_LM_HO
+  //   // cout << "HS_LM_HO" << endl;
+  //   return contexts[5].param;
+  // }
 }
 
 /*
@@ -103,22 +144,81 @@ Parameter AutoTune::DetectObservationContext_(const vector_map::VectorMap& map,
   float angle_step = (angle_max - angle_min) / ranges.size();
   
   // segment points from scan
-  size_t segments = (angle_max - angle_min) / (M_PI / 180 * 5);
+  size_t segments = (angle_max - angle_min) / (M_PI / 180 * 10);
   size_t segment_size = ranges.size() / segments;
-  float sum_stddev = 0.0;
-  segments = 0;
+  // cout << endl;
+  float stddev;
+  vector<float> stddevs;
   for (size_t start = 0; start < ranges.size(); start += segment_size) {
     size_t end = start + segment_size > ranges.size() ? ranges.size() : start + segment_size;
-    sum_stddev += getPointDistStddev_(map, loc, angle, ranges, range_min, range_max, angle_step, start, end);
-    ++segments;
+    stddev = getPointDistStddev_(map, loc, angle, ranges, range_min, range_max, angle_step, angle_min, start, end);
+    if (stddev == -1) { continue; }
+    stddevs.push_back(stddev);
+    // cout << "stddev: " << stddev << endl;
   }
-  if (sum_stddev / segments < OBSERVATION_CUTOFF) {
+  sort(stddevs.begin(), stddevs.end());
+  const float min_percentage = 0.1;
+  const float max_percentage = 0.9;
+  float sum_stddev = 0;
+  // if (stddevs[i] < (stddevs[0] + stddevs[stddevs.size()-1]) / 2) {sum_stddev += stddevs[i];}
+  size_t start_index = (size_t) (stddevs.size() * min_percentage);
+  size_t end_index = (size_t) (stddevs.size() * max_percentage);
+  // for (size_t i = 0; i < stddevs.size(); ++i) {
+  //   if (i % start_index == 0) {
+  //     cout << i / start_index << " " << sum_stddev / start_index << endl;
+  //     sum_stddev = 0;
+  //   }
+  //   sum_stddev += stddevs[i];
+  // }
+  // cout << stddevs.size() / start_index << " " << sum_stddev / start_index << endl;
+  // sum_stddev = 0;
+  for (size_t i = start_index; i < (size_t) (stddevs.size() * max_percentage); ++i) {
+    sum_stddev += stddevs[i];
+  }
+  // cout << "sum_stddev: " << sum_stddev << " num: " << (size_t) (stddevs.size() * percentage) << endl;
+  // cout << "final std: " << sum_stddev / (end_index - start_index) << endl;
+  if (sum_stddev / (end_index - start_index) < OBSERVATION_CUTOFF) {
     // LS_LM_LO
+    // cout << "LS_LM_LO" << endl;
     return contexts[0].param;
   } else {
     // HS_LM_LO
-    return contexts[5].param;
+    // cout << "HS_LM_LO" << endl;
+    return contexts[4].param;
   }
+}
+
+line2f lineFit(const vector<Vector2f>& points) {
+  size_t i, idx1, idx2;
+  line2f line;
+  Vector2f projected_point;
+  Vector2f best_pt1, best_pt2;
+  float min_err, err;
+  util_random::Random rng_;
+  const size_t MAX_ITERNUM = 30;
+  const float MIN_ERROR = 0.05;
+
+  // if (points.size() == 0) { }
+
+  min_err = 10000000;
+  err = 0;
+  for (i = 0; i < MAX_ITERNUM; ++i) {
+    idx1 = (size_t) rng_.UniformRandom(0, points.size());
+    idx2 = (size_t) rng_.UniformRandom(0, points.size());
+    line = line2f(points[idx1], points[idx2]);
+    for (auto& point : points) {
+      ProjectPointOntoLine(point, points[idx1], points[idx2], &projected_point);
+      err += (projected_point - point).norm();
+    }
+    if (err < min_err) {
+      min_err = err;
+      best_pt1 = points[idx1];
+      best_pt2 = points[idx2];
+    }
+    if (min_err / points.size() <= MIN_ERROR) { break; }
+  }
+  // cout << min_err / points.size() << endl;
+  return line2f(best_pt1, best_pt2);
 }
 
 // does linear regression on the segment and returns the standard deviation from the regression line
@@ -129,14 +229,38 @@ float AutoTune::getPointDistStddev_(const vector_map::VectorMap& map_,
                          float range_min,
                          float range_max,
                          float angle_step,
+                         float angle_min,
                          size_t start, size_t end) {
   vector<Vector2f> points;
   for (size_t i = start; i < end; i += DOWNSAMPLE_RATE) {
-    // if (IsObstacle_(map_, loc, angle, i * angle_step, ranges[i], range_min, range_max)) { continue; }
-    // points
-    
+    float angle_i = angle_min + i * angle_step;
+    // ignore obstacles
+    if (CalculateDistanceToWall_(map_, loc, angle, angle_i, ranges[i], range_min, range_max) > OBSTACLE_DIST_CUTOFF) { continue; }
+    // convert point to laser frame
+    Rotation2Df r_i(angle_i);
+    Vector2f v = r_i * Vector2f(ranges[i], 0);
+    points.push_back(v);
   }
-  return 0.0; // TODO: fix me
+
+  if (points.size() == 0) { return -1; }
+  
+  line2f best_line = lineFit(points);
+  
+  // finds standard deviation
+  float total_dist_to_line = 0.0;
+  vector<float> dist_to_line;
+  for (const Vector2f& p : points) {
+    Vector2f projected_point = ProjectPointOntoLine(p, best_line.p0, best_line.p1);
+    float dist = (projected_point - p).norm();
+    total_dist_to_line += dist;
+    dist_to_line.push_back(dist);
+  }
+  float mean = total_dist_to_line / points.size();
+  float var = 0;
+  for (float dist : dist_to_line) {
+    var += pow((dist - mean), 2);
+  }
+  return sqrt(var / points.size());
 }
 
 // determines if a single point is an obstacle or not
@@ -204,8 +328,6 @@ float AutoTune::CalculateDistanceToWall_(const vector_map::VectorMap& map_,
   TransformAToB(mLaserLoc, mLaserAngle, v, angle_i, &laser_loc, &angle_loc);
 
   if (has_intersection) {
-    // cout << "intersects" << endl;
-    // 1) calculate distance to intersection line to determine if obstacle
     Vector2f projected_point = ProjectPointOntoLineSegment(laser_loc, intersection_line.p0, intersection_line.p1);
     return (projected_point - laser_loc).norm();
   }
@@ -233,14 +355,14 @@ Parameter AutoTune::DetectMotionContext_(const vector_map::VectorMap& map,
     total_dist += dist;
   }
   
-  cout << "avg dist: " << total_dist / cnt << endl;
+  // cout << "avg dist: " << total_dist / cnt << endl;
   if (total_dist / cnt < MOTION_CUTOFF) {
     // LS_LM_LO
-    cout << "LS_LM_LO" << endl;
+    // cout << "LS_LM_LO" << endl;
     return contexts[0].param;
   } else {
     // LS_HM_LO
-    cout << "LS_HM_LO" << endl;
+    // cout << "LS_HM_LO" << endl;
     return contexts[2].param;
   }
 }
@@ -278,6 +400,3 @@ Parameter AutoTune::DetectObstacleContext_(const vector_map::VectorMap& map,
 }
 
 } // namespace auto_tune
-
-
-
