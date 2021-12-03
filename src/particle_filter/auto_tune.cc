@@ -50,7 +50,7 @@ void AutoTune::LoadContexts_() {
   
 }
 
-Parameter AutoTune::DetectContext(vector_map::VectorMap map,
+Parameter AutoTune::DetectContext(const vector_map::VectorMap& map,
                                   const Vector2f& loc,
                                   const float angle,
                                   const vector<float>& ranges,
@@ -59,7 +59,8 @@ Parameter AutoTune::DetectContext(vector_map::VectorMap map,
                                   float angle_min,
                                   float angle_max) {
   // return DetectObservationContext_(map, loc, angle, ranges, range_min, range_max, angle_min, angle_max);
-  return DetectObstacleContext_(map, loc, angle, ranges, range_min, range_max, angle_min, angle_max);
+  // return DetectObstacleContext_(map, loc, angle, ranges, range_min, range_max, angle_min, angle_max);
+  return DetectMotionContext_(map, loc, angle, ranges, range_min, range_max, angle_min, angle_max);
   // TODO: add obstacle and motion noises
   // seperate obstabcles vs walls
   // for all obstacles: DetectObstacleContext_()
@@ -131,7 +132,7 @@ float AutoTune::getPointDistStddev_(const vector_map::VectorMap& map_,
                          size_t start, size_t end) {
   vector<Vector2f> points;
   for (size_t i = start; i < end; i += DOWNSAMPLE_RATE) {
-    if (IsObstacle_(map_, loc, angle, i * angle_step, ranges[i], range_min, range_max)) { continue; }
+    // if (IsObstacle_(map_, loc, angle, i * angle_step, ranges[i], range_min, range_max)) { continue; }
     // points
     
   }
@@ -139,13 +140,13 @@ float AutoTune::getPointDistStddev_(const vector_map::VectorMap& map_,
 }
 
 // determines if a single point is an obstacle or not
-bool AutoTune::IsObstacle_(const vector_map::VectorMap& map_,
-                           const Vector2f& loc,
-                           const float angle,
-                           const float angle_i,
-                           const float range_i,
-                           const float range_min,
-                           const float range_max) {
+float AutoTune::CalculateDistanceToWall_(const vector_map::VectorMap& map_,
+                                         const Vector2f& loc,
+                                         const float angle,
+                                         const float angle_i,
+                                         const float range_i,
+                                         const float range_min,
+                                         const float range_max) {
   // Get laser frame's position relative to the map frame.
   Rotation2Df r(angle);
   Vector2f kLaserLoc(0.2, 0);
@@ -206,14 +207,42 @@ bool AutoTune::IsObstacle_(const vector_map::VectorMap& map_,
     // cout << "intersects" << endl;
     // 1) calculate distance to intersection line to determine if obstacle
     Vector2f projected_point = ProjectPointOntoLineSegment(laser_loc, intersection_line.p0, intersection_line.p1);
-    if ((projected_point - laser_loc).norm() >= OBSTACLE_DIST_CUTOFF)
-      return true;
+    return (projected_point - laser_loc).norm();
   }
-  return false;
+  return -1; // never correlated with a wall
 }
 
-void AutoTune::DetectMotionContext_() {
-
+Parameter AutoTune::DetectMotionContext_(const vector_map::VectorMap& map,
+                                           const Vector2f& loc,
+                                           const float angle,
+                                           const vector<float>& ranges,
+                                           float range_min,
+                                           float range_max,
+                                           float angle_min,
+                                           float angle_max) {
+  float angle_step = (angle_max - angle_min) / ranges.size();
+  
+  float angle_i;
+  float total_dist = 0;
+  size_t cnt = 0;
+  for (size_t i = 0; i < ranges.size(); i += DOWNSAMPLE_RATE) {
+    angle_i = angle_min + i * angle_step;
+    float dist = CalculateDistanceToWall_(map, loc, angle, angle_i, ranges[i], range_min, range_max);
+    if (dist == -1) { continue; }
+    ++cnt;
+    total_dist += dist;
+  }
+  
+  cout << "avg dist: " << total_dist / cnt << endl;
+  if (total_dist / cnt < MOTION_CUTOFF) {
+    // LS_LM_LO
+    cout << "LS_LM_LO" << endl;
+    return contexts[0].param;
+  } else {
+    // LS_HM_LO
+    cout << "LS_HM_LO" << endl;
+    return contexts[2].param;
+  }
 }
 
 Parameter AutoTune::DetectObstacleContext_(const vector_map::VectorMap& map,
@@ -230,7 +259,8 @@ Parameter AutoTune::DetectObstacleContext_(const vector_map::VectorMap& map,
   float angle_i;
   for (size_t i = 0; i < ranges.size(); i += DOWNSAMPLE_RATE) {
     angle_i = angle_min + i * angle_step;
-    if (IsObstacle_(map, loc, angle, angle_i, ranges[i], range_min, range_max))
+    float dist = CalculateDistanceToWall_(map, loc, angle, angle_i, ranges[i], range_min, range_max);
+    if (dist != -1 && dist >= OBSTACLE_DIST_CUTOFF)
       num_obstacles++;
   }
   
@@ -249,10 +279,5 @@ Parameter AutoTune::DetectObstacleContext_(const vector_map::VectorMap& map,
 
 } // namespace auto_tune
 
-// int main() {
-//   cout << "Auto" << endl;
-//   auto_tune::AutoTune autoTune;
-//   return 0;
-// }
 
 

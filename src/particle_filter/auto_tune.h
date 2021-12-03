@@ -45,7 +45,7 @@ class AutoTune {
 public:
   AutoTune();
   // calls the three private methods and changes the parameters
-  Parameter DetectContext(vector_map::VectorMap map,
+  Parameter DetectContext(const vector_map::VectorMap& map,
                           const Vector2f& loc,
                           const float angle,
                           const vector<float>& ranges,
@@ -64,6 +64,7 @@ private:
   const float OBSTACLE_DIST_CUTOFF = 0.5;
   // ratio of obstacles over all observation point cloud
   const float OBSTACLE_CUTOFF = 0.1;
+  const float MOTION_CUTOFF = 0.1;
   const float OBSERVATION_CUTOFF = 0.25;
   const float DOWNSAMPLE_RATE = 20;
 
@@ -79,32 +80,39 @@ private:
                                       float angle_min,
                                       float angle_max);
   // detects whether the current context is high or low motion noise
-  void DetectMotionContext_();
+  Parameter DetectMotionContext_(const vector_map::VectorMap& map,
+                                 const Vector2f& loc,
+                                 const float angle,
+                                 const vector<float>& ranges,
+                                 float range_min,
+                                 float range_max,
+                                 float angle_min,
+                                 float angle_max);
   // detects whether the current context has many or few obstacles 
   Parameter DetectObstacleContext_(const vector_map::VectorMap& map,
-                              const Vector2f& loc,
-                              const float angle,
-                              const vector<float>& ranges,
-                              float range_min,
-                              float range_max,
-                              float angle_min,
-                              float angle_max);
+                                   const Vector2f& loc,
+                                   const float angle,
+                                   const vector<float>& ranges,
+                                   float range_min,
+                                   float range_max,
+                                   float angle_min,
+                                   float angle_max);
   // calculate the stadard deviation of a point cloud sengment distribution
   float getPointDistStddev_(const vector_map::VectorMap& map_,
-                         const Vector2f& loc,
-                         const float angle,
-                         const vector<float>& ranges,
-                         float range_min,
-                         float range_max,
-                         float angle_step,
-                         size_t start, size_t end);
-  bool IsObstacle_(const vector_map::VectorMap& map_,
-                const Vector2f& loc,
-                const float angle,
-                const float angle_i,
-                const float range_i,
-                const float range_min,
-                const float range_max);
+                            const Vector2f& loc,
+                            const float angle,
+                            const vector<float>& ranges,
+                            float range_min,
+                            float range_max,
+                            float angle_step,
+                            size_t start, size_t end);
+  float CalculateDistanceToWall_(const vector_map::VectorMap& map_,
+                                 const Vector2f& loc,
+                                 const float angle,
+                                 const float angle_i,
+                                 const float range_i,
+                                 const float range_min,
+                                 const float range_max);
 };
 
 
