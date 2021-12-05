@@ -192,7 +192,7 @@ def find_best_params(context):
         dist = []
         for filename in os.listdir(BAG_YAML_DIR):
             # determine if this file belongs to this context
-            if (not filename.endswith(".bag")) or filename[:2] == "pf" \
+            if (not filename.endswith(".bag")) or filename[:2] == "pf" or filename[:4] == "auto"\
                 or not file_in_context(filename, context):
                 continue
             change_params(std, d_long, d_short, motion_dist_k1, motion_dist_k2, motion_a_k1, motion_a_k2) 
@@ -238,7 +238,7 @@ def find_best_params_all_contexts():
 
 if __name__ == '__main__':
     file = open("best_params.txt", "w")
-    best_params = find_best_params(Context.HS_HM_HO)
-    file.write("LS_LM_LO\n")
+    best_params = find_best_params(Context.LS_LM_HO)
+    file.write("LS_LM_HO\n")
     file.write(str(best_params) + "\n")
     file.close()
