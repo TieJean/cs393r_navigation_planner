@@ -8,10 +8,11 @@ BAG_DIR=$(pwd)
 
 cd $BAG_DIR
 filenames="*.bag"
-while getopts "f:" opt
+while getopts "f:p:" opt
 do
     case "$opt" in
         f) filenames=${OPTARG};;
+        p) prefix=${OPTARG};;
     esac
 done
 
