@@ -37,7 +37,6 @@
 #include "particle_filter.h"
 
 #include "vector_map/vector_map.h"
-// #include "auto_tune.h"
 
 using geometry::line2f;
 using std::cout;
@@ -53,22 +52,20 @@ using std::sin;
 using std::cos;
 using amrl_msgs::VisualizationMsg;
 
-using namespace auto_tune;
-
 DEFINE_uint32(num_particles, 50, "Number of particles");
 
 CONFIG_FLOAT(GAMMA, "GAMMA");
-// CONFIG_FLOAT(SENSOR_STD_DEV, "SENSOR_STD_DEV");
-// CONFIG_FLOAT(D_SHORT, "D_SHORT");
-// CONFIG_FLOAT(D_LONG, "D_LONG");
+CONFIG_FLOAT(SENSOR_STD_DEV, "SENSOR_STD_DEV");
+CONFIG_FLOAT(D_SHORT, "D_SHORT");
+CONFIG_FLOAT(D_LONG, "D_LONG");
 CONFIG_FLOAT(P_OUTSIDE_RANGE, "P_OUTSIDE_RANGE");
 CONFIG_FLOAT(MOTION_X_STD_DEV, "MOTION_X_STD_DEV");
 CONFIG_FLOAT(MOTION_Y_STD_DEV, "MOTION_Y_STD_DEV");
 CONFIG_FLOAT(MOTION_A_STD_DEV, "MOTION_A_STD_DEV");
-// CONFIG_FLOAT(MOTION_DIST_K1, "MOTION_DIST_K1");
-// CONFIG_FLOAT(MOTION_DIST_K2, "MOTION_DIST_K2");
-// CONFIG_FLOAT(MOTION_A_K1, "MOTION_A_K1");
-// CONFIG_FLOAT(MOTION_A_K2, "MOTION_A_K2");
+CONFIG_FLOAT(MOTION_DIST_K1, "MOTION_DIST_K1");
+CONFIG_FLOAT(MOTION_DIST_K2, "MOTION_DIST_K2");
+CONFIG_FLOAT(MOTION_A_K1, "MOTION_A_K1");
+CONFIG_FLOAT(MOTION_A_K2, "MOTION_A_K2");
 CONFIG_FLOAT(MAX_D_DIST, "MAX_D_DIST");
 CONFIG_FLOAT(MAX_D_ANGLE, "MAX_D_ANGLE");
 
@@ -77,7 +74,6 @@ namespace particle_filter {
 config_reader::ConfigReader config_reader_({"config/particle_filter.lua"});
 
 ParticleFilter::ParticleFilter() :
-    autoTune(),
     prev_odom_loc_(-1000, -1000),
     prev_odom_angle_(-1000),
     odom_initialized_(false) {
@@ -173,7 +169,7 @@ void ParticleFilter::GetPredictedPointCloud(const Vector2f& loc,
 }
 
 // returns the log likelihood of x in a Gaussian distribution
-float ParticleFilter::calculateLogGaussian(float mean, float x, float stddev, float range_min, float range_max) {
+float calculateLogGaussian(float mean, float x, float stddev, float range_min, float range_max) {
   // remember we don't want to use 0 outside the window
   if (x < range_min || x > range_max) {
     return CONFIG_P_OUTSIDE_RANGE;
@@ -254,21 +250,6 @@ void ParticleFilter::ObserveLaser(const vector<float>& ranges,
   // This should only do anything when the robot has moved 0.15m or rotated 10 degrees
   if (d_dist < CONFIG_MAX_D_DIST && d_angle < CONFIG_MAX_D_ANGLE)
     return;
-  
-  // FINAL PROJECT CODE: Changes params during runtime
-  if (auto_tune) {
-    Vector2f loc;
-    float angle;
-    GetLocation(&loc, &angle);
-    Parameter p = autoTune.DetectContext(map_, loc, angle, ranges, range_min, range_max, angle_min, angle_max);
-    CONFIG_SENSOR_STD_DEV = p.sensor_std;
-    CONFIG_D_SHORT        = p.sensor_std * p.d_short;
-    CONFIG_D_LONG         = p.sensor_std * p.d_long;
-    CONFIG_MOTION_DIST_K1 = p.motion_dist_k1;
-    CONFIG_MOTION_DIST_K2 = p.motion_dist_k2;
-    CONFIG_MOTION_A_K1    = p.motion_a_k1;
-    CONFIG_MOTION_A_K2    = p.motion_a_k2;
-  }
   
   d_dist = 0.0;
   d_angle = 0.0;

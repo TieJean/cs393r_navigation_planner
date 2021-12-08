@@ -161,17 +161,17 @@ def find_best_params(context):
         fp.close()
     fp = open(CHECKPOINT + context.name + ".txt", 'a+')
 
-    obs_std  = [0.1]
-    d_shorts = [1.5]
-    d_longs  = [2.0]
+    # obs_std  = [0.1]
+    # d_shorts = [1.5]
+    # d_longs  = [2.0]
     motion_dist_k1s = [0.3]
     motion_dist_k2s = [0.05]
     motion_a_k1s = [0.1]
     motion_a_k2s = [1.0]
     
-    # obs_std  = [0.05, 0.1, 0.15, 0.2]
-    # d_shorts = [1.0, 1.0, 1.5, 1.5, 2.0]
-    # d_longs  = [1.5, 2.0, 2.0, 2.5, 2.5]
+    obs_std  = [0.05, 0.1, 0.15, 0.2]
+    d_shorts = [1.0, 1.0, 1.5, 1.5, 2.0]
+    d_longs  = [1.5, 2.0, 2.0, 2.5, 2.5]
     # motion_dist_k1s = [0.1, 0.3, 0.5]
     # motion_dist_k2s = [0.05, 0.15, 0.25]
     # motion_a_k1s = [0.1, 0.3, 0.5]
