@@ -109,7 +109,7 @@ if __name__ == '__main__':
     # os.chdir("./src/navigation/")
     # shutil.copy('obstacle-map-lines.txt', MAP_DIR)
     # shutil.copy(MAP_DIR + MAP_FILENAME, MAP_DIR + "Original.vectormap.txt")
-    # print("Done.")
+    # print("Finish creating map files.")
 
     # generates bag files
     '''
@@ -125,15 +125,16 @@ if __name__ == '__main__':
     # angular_error_rate = [0, 5.0, 20.0, 45.0]
     obstacle_map = [NO_OBSTACLES, SOME_OBSTACLES, MANY_OBSTACLES, FULL_OBSTACLES]
     # laser_noise_stddev = [0]
-    angular_drift_rate = [0]
-    angular_error_rate = [0]
-    # obstacle_map = [NO_OBSTACLES]
+    angular_drift_rate = [2.5]
+    angular_error_rate = [40.0]
+    # obstacle_map = [MANY_OBSTACLES]
 
     print("Generating bag files ...")
     generate_bagfiles(laser_noise_stddev, angular_drift_rate, angular_error_rate, obstacle_map)
-    print("Done.")
+    print("Finish generating bag files.")
     
     print("Reset map ...")
     # reset the map file
     change_map(0)
     # change_lua(1.0, 2.0, 3.0)
+    print("Done.")
