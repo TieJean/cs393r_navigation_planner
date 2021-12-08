@@ -118,14 +118,14 @@ class ParticleFilter {
   bool updated;
 
   // auto-tuned params
-  bool auto_tune = false;
+  bool auto_tune = true;
   float CONFIG_SENSOR_STD_DEV = 0.1;
   float CONFIG_D_SHORT = 0.1 * 1.5;
   float CONFIG_D_LONG = 0.1 * 2.0;
-  float CONFIG_MOTION_DIST_K1 = 0.3;
+  float CONFIG_MOTION_DIST_K1 = 0.1;
   float CONFIG_MOTION_DIST_K2 = 0.05;
   float CONFIG_MOTION_A_K1 = 0.1;
-  float CONFIG_MOTION_A_K2 = 1.0;
+  float CONFIG_MOTION_A_K2 = 0.5;
   
   float calculateLogGaussian(float mean, float x, float stddev, float range_min, float range_max);
 };

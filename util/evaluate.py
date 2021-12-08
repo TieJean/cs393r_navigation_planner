@@ -44,7 +44,10 @@ def eval(ground_truth, autotune=False):
         locs_ground_truth = ground_truth[index]
         index += 1
         
-        obstacle_type = int(filename[-5])
+        types = filename[:filename.find(".bag")].split("_")
+        sensor_type = float(types[0])
+        obstacle_type = float(types[3])
+
 
         for i in range(num_trials):
             os.chdir(UTIL_DIR)
@@ -55,7 +58,7 @@ def eval(ground_truth, autotune=False):
             locs_pf = yaml2dict(EVALBAG_DIR + prefix + filename + ".yaml", directory=EVALBAG_DIR)
 
             dist = compute_distance(locs_ground_truth, locs_pf)
-            ret[obstacle_type].append(dist)
+            ret[sensor_type, obstacle_type].append(dist)
         time.sleep(1)
             
     print(ret)
