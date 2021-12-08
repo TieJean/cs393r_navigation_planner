@@ -52,11 +52,13 @@ def change_map(have_obstacles):
         myfile.seek(0)
         if have_obstacles == SOME_OBSTACLES:
             obstacle_lines = list(obstacles)
-            for _ in range(0, 8):
+            percent = 0.2
+            for _ in range(0, int(len(obstacle_lines) * percent)):
                 myfile.write(random.choice(obstacle_lines))
         elif have_obstacles == MANY_OBSTACLES:
             obstacle_lines = list(obstacles)
-            for _ in range(0, 12):
+            percent = 0.5
+            for _ in range(0, int(len(obstacle_lines) * percent)):
                 myfile.write(random.choice(obstacle_lines))
         elif have_obstacles == FULL_OBSTACLES:
             myfile.write(obstacles.read())
@@ -99,11 +101,11 @@ if __name__ == '__main__':
     ROOT_DIR = str(os.getcwd()) + "/"
 
     # creates map files
-    print("Creating map files ...")
-    os.chdir("./src/navigation/")
-    shutil.copy('obstacle-map-lines.txt', MAP_DIR)
-    shutil.copy(MAP_DIR + MAP_FILENAME, MAP_DIR + "Original.vectormap.txt")
-    print("Done.")
+    # print("Creating map files ...")
+    # os.chdir("./src/navigation/")
+    # shutil.copy('obstacle-map-lines.txt', MAP_DIR)
+    # shutil.copy(MAP_DIR + MAP_FILENAME, MAP_DIR + "Original.vectormap.txt")
+    # print("Done.")
 
     # generates bag files
     '''
@@ -114,14 +116,14 @@ if __name__ == '__main__':
     angular_error_rate_max = 45.0  # absolute value
     angular_error_rate_cutoff = 10.0  # absolute value
     '''
-    # laser_noise_stddev = [0, 0.02, 0.07, 0.1]
+    laser_noise_stddev = [0, 0.02, 0.07, 0.1]
     # angular_drift_rate = [0, 0.2, 1.0, 2.5]
     # angular_error_rate = [0, 5.0, 20.0, 45.0]
-    # obstacle_map = [NO_OBSTACLES, SOME_OBSTACLES, MANY_OBSTACLES, FULL_OBSTACLES]
-    laser_noise_stddev = [0]
+    obstacle_map = [NO_OBSTACLES, SOME_OBSTACLES, MANY_OBSTACLES, FULL_OBSTACLES]
+    # laser_noise_stddev = [0]
     angular_drift_rate = [0]
     angular_error_rate = [0]
-    obstacle_map = [NO_OBSTACLES]
+    # obstacle_map = [NO_OBSTACLES]
 
     print("Generating bag files ...")
     generate_bagfiles(laser_noise_stddev, angular_drift_rate, angular_error_rate, obstacle_map)
