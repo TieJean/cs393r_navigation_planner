@@ -1,8 +1,8 @@
 import os
-# import in_place
+import in_place
 import subprocess
-# import signal
-# import time
+import signal
+import time
 import random
 import shutil
 
@@ -12,7 +12,8 @@ LUA_FILENAME = 'simulator.lua'
 UT_AUTOMATA_DIR = os.path.expanduser("~") + "/ut_automata/"
 MAP_DIR = os.path.expanduser("~") + "/amrl_maps/GDC1/"
 MAP_FILENAME = 'GDC1.vectormap.txt'
-
+os.chdir("../")
+PARTICLE_FILTER_DIR = str(os.getcwd()) + "/"
 
 def change_lua(laser_noise_stddev, angular_drift_rate, angular_error_rate):
     with in_place.InPlace(LUA_DIR + LUA_FILENAME) as fp:
@@ -66,7 +67,8 @@ def change_map(have_obstacles):
             data = myfile.read()
             myfile.seek(0)
             obstacle_lines = list(obstacles)
-            for _ in range(0, 8):
+            percent = 0.2
+            for _ in range(0, int(percent * len(obstacle_lines))):
                 myfile.write(random.choice(obstacle_lines))
             myfile.write(original.read())
             myfile.truncate()
@@ -76,15 +78,15 @@ def change_map(have_obstacles):
         
 
 
-def generate_bagfiles():
-    laser_noise_stddev = [0, 0.02, 0.07, 0.1]
-    angular_drift_rate = [0, 0.2, 1.0, 2.5]
-    angular_error_rate = [0, 5.0, 20.0, 45.0]
-    obstacle_map = [0, 1, 2] # no obstacles, many obstacles, some obstacles
-
+def generate_bagfiles(laser_noise_stddev = [0, 0.02, 0.07, 0.1],
+                      angular_drift_rate = [0, 0.2, 1.0, 2.5],
+                      angular_error_rate = [0, 5.0, 20.0, 45.0],
+                      obstacle_map = [0, 1, 2], # no obstacles, many obstacles, some obstacles
+                      directory = "bag2"):
+    change_map(0)
     for laser_noise in laser_noise_stddev:
         for i in range(0, len(angular_drift_rate)):
-            for map_val in range(0, 3): # for the map conditions, 1=full obstacles, 0=no obstacles, 2=some obstacles
+            for map_val in obstacle_map: # for the map conditions, 1=full obstacles, 0=no obstacles, 2=some obstacles
                 change_lua(laser_noise, angular_drift_rate[i], angular_error_rate[i])
                 change_map(map_val)
                 os.chdir(PARTICLE_FILTER_DIR)
@@ -93,11 +95,11 @@ def generate_bagfiles():
                 os.chdir(UT_AUTOMATA_DIR)
                 proc_sim = subprocess.Popen([UT_AUTOMATA_DIR + "bin/simulator", "--localize", "&"])
                 # proc_sim = subprocess.Popen("exec " + UT_AUTOMATA_DIR + "bin/simulator &", shell=True)
-                os.chdir(PARTICLE_FILTER_DIR + "bag2/")
+                os.chdir(PARTICLE_FILTER_DIR + directory + "/")
                 # laser, drift, error
                 filename = str(laser_noise) + "_" + str(angular_drift_rate[i]) + "_" + str(angular_error_rate[i]) + "_" + str(map_val)
                 # proc_bag = subprocess.Popen(["rosbag", "record", "-a", "-O", filename, "&"])
-                os.system("rosbag record -a -O " + filename + " --duration=30 &")
+                os.system("rosbag record localization odom scan -O " + filename + " --duration=30 &")
                 # call rosbag play to record file
                 try:
                     outs, errs = proc_sim.communicate(timeout=30)
@@ -108,62 +110,15 @@ def generate_bagfiles():
                     proc_nav.kill()
                     # proc_bag.kill()
                 time.sleep(5)
-            
+    change_map(0)        
 
-if __name__ == '__main__':
-    # creates map files
-    os.chdir("../src/navigation/")
-    shutil.copy('obstacle-map-lines.txt', MAP_DIR)
-    shutil.copy(MAP_DIR + MAP_FILENAME, MAP_DIR + "Original.vectormap.txt")
+# if __name__ == '__main__':
+#     # creates map files
+#     # os.chdir("../src/navigation/")
+#     # shutil.copy('obstacle-map-lines.txt', MAP_DIR)
+#     # shutil.copy(MAP_DIR + MAP_FILENAME, MAP_DIR + "Original.vectormap.txt")
 
-    os.chdir("../")
-    PARTICLE_FILTER_DIR = str(os.getcwd()) + "/"
-    generate_bagfiles()
-    # reset the map file
-    change_map(0)
-    # change_lua(1.0, 2.0, 3.0)
-
-    # for i in range(3):
-    #     os.chdir(PARTICLE_FILTER_DIR)
-    #     proc_nav = subprocess.Popen([PARTICLE_FILTER_DIR + "bin/navigation", "&"])
-    #     os.chdir(UT_AUTOMATA_DIR)
-    #     proc_sim = subprocess.Popen([UT_AUTOMATA_DIR + "bin/simulator", "&"])
-    #     os.chdir(PARTICLE_FILTER_DIR + "bag/")
-    #     filename = "test" + str(i)
-    #     proc_bag = subprocess.Popen(["rosbag", "record", "-a", "-O", filename, "--duration=3"])
-    #     # os.system("rosbag record -a -O " + file_name + " --duration=3 &")
-    #     try:
-    #         outs, errs = proc_nav.communicate(timeout=3)
-    #         outs, errs = proc_sim.communicate(timeout=3)
-    #         outs, errs = proc_bag.communicate(timeout=3)
-    #     except subprocess.TimeoutExpired:
-    #         print("TimeoutExpired\n")
-    #         proc_nav.kill()
-    #         proc_sim.kill()
-    #         proc_bag.kill()
-    #         os.system("ps -aux | grep \"simulator\"")
-    #         os.system("ps -aux | grep \"navigation\"")
-    #         os.system("ps -aux | grep \"rosbag\"")
-    #         time.sleep(1)
-    # os.system("ps -aux | grep \"simulator\"")
-    # os.system("ps -aux | grep \"navigation\"")
-    # os.system("ps -aux | grep \"rosbag\"")
-            
-    # os.chdir(PARTICLE_FILTER_DIR)
-    # proc_nav = subprocess.Popen([PARTICLE_FILTER_DIR + "bin/navigation", "&"])
-    # os.chdir(UT_AUTOMATA_DIR)
-    # proc_sim = subprocess.Popen([UT_AUTOMATA_DIR + "bin/simulator", "&"])
-    # os.chdir(PARTICLE_FILTER_DIR + "bag/")
-    # filename = "test"
-    # os.system("rosbag record -a -O " + filename + " --duration=5 &")
-    # try:
-    #     outs, errs = proc_sim.communicate(timeout=5)
-    #     outs, errs = proc_nav.communicate(timeout=5)
-    # except subprocess.TimeoutExpired:
-    #     proc_sim.kill()
-    #     proc_nav.kill()
-    
-            
-
-
-    
+#     # generate_bagfiles()
+#     # reset the map file
+#     change_map(0)
+#     # change_lua(1.0, 2.0, 3.0)

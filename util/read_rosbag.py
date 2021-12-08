@@ -35,9 +35,9 @@ class Context(Enum):
     HS_HM_HO = 7
 
 
-def yaml2dict(filename):
+def yaml2dict(filename, directory=BAG_YAML_DIR):
     ret = []
-    with open(os.path.join(BAG_YAML_DIR, filename), "r") as stream:
+    with open(os.path.join(directory, filename), "r") as stream:
         try:
             dictionaries = yaml.safe_load_all(stream)
             for dictionary in dictionaries:
@@ -236,14 +236,14 @@ def find_best_params_all_contexts():
     file.close()
 
 
-if __name__ == '__main__':
-    # file = open("best_params.txt", "w")
-    # best_params = find_best_params(Context.HS_HM_HO)
-    # file.write("LS_LM_LO\n")
-    # file.write(str(best_params) + "\n")
-    # file.close()
-    locs1 = yaml2dict(BAG_YAML_DIR + "0_0_0_1.bag.yaml")
-    locs2 = yaml2dict(BAG_YAML_DIR + "auto_0_0_0_1.bag.yaml")
-    locs3 = yaml2dict(BAG_YAML_DIR + "pf_0_0_0_1.bag.yaml")
-    print("Distance for autotune", compute_distance(locs1, locs2))
-    print("Distance for no autotune", compute_distance(locs1, locs3))
+# if __name__ == '__main__':
+#     # file = open("best_params.txt", "w")
+#     # best_params = find_best_params(Context.HS_HM_HO)
+#     # file.write("LS_LM_LO\n")
+#     # file.write(str(best_params) + "\n")
+#     # file.close()
+#     locs1 = yaml2dict(BAG_YAML_DIR + "0_0_0_1.bag.yaml")
+#     locs2 = yaml2dict(BAG_YAML_DIR + "auto_0_0_0_1.bag.yaml")
+#     locs3 = yaml2dict(BAG_YAML_DIR + "pf_0_0_0_1.bag.yaml")
+#     print("Distance for autotune", compute_distance(locs1, locs2))
+#     print("Distance for no autotune", compute_distance(locs1, locs3))

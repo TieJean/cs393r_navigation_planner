@@ -1,19 +1,24 @@
 #!/bin/bash
-prefix="auto_"
+
 
 cd ..
 PF_DIR=$(pwd)
-cd bag
-BAG_DIR=$(pwd)
 
-cd $BAG_DIR
 filenames="*.bag"
-while getopts "f:" opt
+prefix="pf_"
+
+cd bag
+bag_dir=$(pwd)
+while getopts "f:p:d:" opt
 do
     case "$opt" in
         f) filenames=${OPTARG};;
+        p) prefix=${OPTARG};;
+        d) bag_dir=$PF_DIR/${OPTARG};;
     esac
 done
+
+cd $bag_dir
 
 for f in $filenames
 do
@@ -24,7 +29,7 @@ do
     cd $PF_DIR
     (./bin/particle_filter) &
     pf_pid=$!
-    cd $BAG_DIR
+    cd $bag_dir
     rosbag play tmp.bag
     kill -9 $pf_pid
     ps -aux | grep "particle_filter"
