@@ -71,7 +71,7 @@ def generate_bagfiles(laser_noise_stddev = [0, 0.02, 0.07, 0.1],
                       angular_drift_rate = [0, 0.2, 1.0, 2.5],
                       angular_error_rate = [0, 5.0, 20.0, 45.0],
                       obstacle_map = [0, 1, 2], # no obstacles, many obstacles, some obstacles
-                      directory = "bag2"):
+                      directory = BAG_DIR):
     for laser_noise in laser_noise_stddev:
         for i in range(0, len(angular_drift_rate)):
             for map_val in obstacle_map: # for the map conditions, 1=full obstacles, 0=no obstacles, 2=some obstacles
