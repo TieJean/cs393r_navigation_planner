@@ -169,12 +169,12 @@ def find_best_params(context):
     # num_particles = [30, 50, 80]
     
     obs_std  = [0.05, 0.1, 0.15, 0.2]
-    d_longs  = [1.5, 2.0, 2.0, 2.5, 2.5]
-    d_shorts = [1.0, 1.0, 1.5, 2.0, 1.0]
-    motion_dist_k1s = [0.1, 0.3, 0.5]
-    motion_dist_k2s = [0.05, 0.15, 0.25]
-    motion_a_k1s = [0.1, 0.3, 0.5]
-    motion_a_k2s = [0.5, 1.0, 1.5]
+    d_longs  = [2.0, 2.0, 2.5, 2.5]
+    d_shorts = [1.0, 1.5, 2.0, 1.0]
+    motion_dist_k1s = [0.3]
+    motion_dist_k2s = [0.05]
+    motion_a_k1s = [0.1]
+    motion_a_k2s = [1.0]
     best_params = []
 
     for std, (d_long, d_short), motion_dist_k1, motion_dist_k2, motion_a_k1, motion_a_k2 in \
@@ -192,7 +192,7 @@ def find_best_params(context):
         dist = []
         for filename in os.listdir(BAG_YAML_DIR):
             # determine if this file belongs to this context
-            if (not filename.endswith(".bag")) or filename[:2] == "pf" or filename[:4] == "auto"\
+            if (not filename.endswith(".bag")) or filename[:2] == "pf" or filename[:4] == "auto" or filename[:3] == "tmp"\
                 or not file_in_context(filename, context):
                 continue
             change_params(std, d_long, d_short, motion_dist_k1, motion_dist_k2, motion_a_k1, motion_a_k2) 

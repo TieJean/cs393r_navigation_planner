@@ -410,7 +410,7 @@ namespace navigation
       return;
 
     if (!nav_goal_initialized_) {
-      SetNavGoal(Vector2f(-12.0, 18.0), 0.0);
+      SetNavGoal(Vector2f(-11.0, 8.5), 0.0);
       nav_goal_initialized_ = true;
     }
 

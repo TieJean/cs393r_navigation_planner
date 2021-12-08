@@ -1,8 +1,8 @@
 import os
-# import in_place
+import in_place
 import subprocess
-# import signal
-# import time
+import signal
+import time
 import random
 import shutil
 
@@ -10,7 +10,7 @@ LUA_DIR = os.path.expanduser("~") + "/ut_automata/config/"
 LUA_FILENAME = 'simulator.lua'
 # LUA_FILENAME = 'test.lua'
 UT_AUTOMATA_DIR = os.path.expanduser("~") + "/ut_automata/"
-MAP_DIR = os.path.expanduser("~") + "/amrl_maps/GDC1/"
+MAP_DIR = os.path.expanduser("~") + "/amrl_libraries/amrl_maps/GDC1/"
 MAP_FILENAME = 'GDC1.vectormap.txt'
 
 
@@ -77,10 +77,15 @@ def change_map(have_obstacles):
 
 
 def generate_bagfiles():
-    laser_noise_stddev = [0, 0.02, 0.07, 0.1]
-    angular_drift_rate = [0, 0.2, 1.0, 2.5]
-    angular_error_rate = [0, 5.0, 20.0, 45.0]
-    obstacle_map = [0, 1, 2] # no obstacles, many obstacles, some obstacles
+    # laser_noise_stddev = [0, 0.02, 0.07, 0.1]
+    # angular_drift_rate = [0, 0.2, 1.0, 2.5]
+    # angular_error_rate = [0, 5.0, 20.0, 45.0]
+    # obstacle_map = [0, 1, 2] # no obstacles, many obstacles, some obstacles
+
+    laser_noise_stddev = [0]
+    angular_drift_rate = [0]
+    angular_error_rate = [0]
+    obstacle_map = [1, 2]
 
     for laser_noise in laser_noise_stddev:
         for i in range(0, len(angular_drift_rate)):
@@ -116,11 +121,12 @@ if __name__ == '__main__':
     shutil.copy('obstacle-map-lines.txt', MAP_DIR)
     shutil.copy(MAP_DIR + MAP_FILENAME, MAP_DIR + "Original.vectormap.txt")
 
-    os.chdir("../")
+    os.chdir("../../")
     PARTICLE_FILTER_DIR = str(os.getcwd()) + "/"
+    print(PARTICLE_FILTER_DIR)
     generate_bagfiles()
     # reset the map file
-    change_map(0)
+    # change_map(0)
     # change_lua(1.0, 2.0, 3.0)
 
     # for i in range(3):

@@ -14,7 +14,7 @@ f = open("boxes.txt", "a")
 # x_lower = -25.3
 # x_upper = -16.0
 
-f.write("Rooms along bottom of hallway\n")
+# f.write("Rooms along bottom of hallway\n")
 y_lower = 2.7
 y_upper = 7.0
 x_lower = -19.7
@@ -23,7 +23,7 @@ x_upper = -5.6
 
 BOX_SIZE = 0.5
 
-NUM_BOXES = 10
+NUM_BOXES = 30
 
 for i in range(NUM_BOXES):
 	x = float("{:.6f}".format(random.uniform(x_lower, x_upper)))
