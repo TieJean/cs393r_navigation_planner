@@ -8,7 +8,6 @@ from os.path import exists
 import time
 import statistics
 
-# BAG_YAML_DIR = "../bag/GDC1/"
 BAG_YAML_DIR = "../bag/"
 LUA_DIR = "../config/"
 LUA_FILENAME = "particle_filter.lua"
@@ -73,7 +72,7 @@ def change_params(obs_std, d_long, d_short, motion_dist_k1, motion_dist_k2, moti
     with in_place.InPlace(LUA_DIR + LUA_FILENAME) as fp:
         for line in fp:
             vars = line.split()
-            if len(vars) != 3:
+            if len(vars) == 0:
                 fp.write(line)
                 continue
             var = vars[0]
@@ -81,10 +80,10 @@ def change_params(obs_std, d_long, d_short, motion_dist_k1, motion_dist_k2, moti
                 new_line = var + " = " + str(obs_std) + "\n"
                 fp.write(new_line)
             elif var == "D_LONG":
-                new_line = var + " = " + str(d_long) + "\n"
+                new_line = var + " = SENSOR_STD_DEV * " + str(d_long) + "\n"
                 fp.write(new_line)
             elif var == "D_SHORT":
-                new_line = var + " = " + str(d_short) + "\n"
+                new_line = var + " = SENSOR_STD_DEV * " + str(d_short) + "\n"
                 fp.write(new_line)
             elif var == "MOTION_DIST_K1":
                 new_line = var + " = " + str(motion_dist_k1) + "\n"
@@ -191,13 +190,14 @@ def find_best_params(context):
                 + " " + str(motion_a_k1) + " " + str(motion_a_k2)) 
         d_long *= std
         d_short *= std
+        change_params(std, d_long, d_short, motion_dist_k1, motion_dist_k2, motion_a_k1, motion_a_k2) 
+        
         dist = []
         for filename in os.listdir(BAG_YAML_DIR):
             # determine if this file belongs to this context
             if (not filename.endswith(".bag")) or filename[:2] == "pf" \
                 or not file_in_context(filename, context):
                 continue
-            change_params(std, d_long, d_short, motion_dist_k1, motion_dist_k2, motion_a_k1, motion_a_k2) 
             os.system("./generate_pf_file.sh -f " + filename + " -p pf_")
             time.sleep(0.5)
             os.system("./parse_rosbag.sh -f " + filename) # generates yaml
@@ -237,22 +237,53 @@ def find_best_params_all_contexts():
         file.write(str(best_params) + "\n\n")
     file.close()
 
+def best_param_from_multiple_runs(context_name):
+    '''
+    Find best param over multiple trails
+    '''
+    mean = {}
+    std = {}
+    count = 0
+    with open("checkpoints/" + context_name + ".txt", "r") as checkpoint:
+        # get each param set's average mean and std over all trails 
+        for line in checkpoint:
+            if line == "\n":
+                continue
+            count += 1
+            token = line.split()
+            key = token[0] + "_" + token[1] + "_" + token[2]
+            if key in mean:
+                mean[key] += (float) (token[8])
+                std[key] += (float) (token[9])
+            else:
+                mean[key] = (float) (token[8])
+                std[key] = (float) (token[9])
+    checkpoint.close()
+
+    trails = (count / len(mean))
+    best_mean = 100000.0
+    best_std = 0.0
+    best_key = ""
+    for key in mean:
+        if mean[key] / trails < best_mean:
+            best_mean = mean[key] / trails
+            best_std = std[key] / trails
+            best_key = key
+    return (best_key, best_mean, best_std)
 
 if __name__ == '__main__':
-    file = open("best_params.txt", "w")
-    # best_params = find_best_params(Context.LS_LM_LO)
-    # file.write("LS_LM_LO\n")
-    # file.write(str(best_params) + "\n")
+    best_params = find_best_params(Context.LS_HM_LO)
     best_params = find_best_params(Context.LS_HM_HO)
-    file.write("LS_HM_HO\n")
-    file.write(str(best_params) + "\n")
     best_params = find_best_params(Context.HS_HM_LO)
-    file.write("HS_HM_LO\n")
-    file.write(str(best_params) + "\n")
     best_params = find_best_params(Context.HS_HM_HO)
-    file.write("HS_HM_HO\n")
-    file.write(str(best_params) + "\n")
-    file.close()
+
+    # file = open("best_params.txt", "w")
+    # contexts = ["LS_HM_LO", "LS_HM_HO", "HS_HM_LO", "HS_HM_HO"]
+    # for c in contexts:
+    #     best_key, best_mean, best_std = best_param_from_multiple_runs(c)
+    #     file.write(c + "\n")
+    #     file.write(str(best_key) + ": " + str(best_mean) + " " + str(best_std) + "\n\n")
+    # file.close()
 
     # locs1 = yaml2dict(BAG_YAML_DIR + "0_0_0_1.bag.yaml")
     # locs2 = yaml2dict(BAG_YAML_DIR + "auto_0_0_0_1.bag.yaml")
