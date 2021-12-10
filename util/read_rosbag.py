@@ -188,8 +188,6 @@ def find_best_params(context):
         fp.write("\n" + str(std) + " " + str(d_long) + " " + str(d_short) \
                 + " " + str(motion_dist_k1) + " " + str(motion_dist_k2) \
                 + " " + str(motion_a_k1) + " " + str(motion_a_k2)) 
-        d_long *= std
-        d_short *= std
         change_params(std, d_long, d_short, motion_dist_k1, motion_dist_k2, motion_a_k1, motion_a_k2) 
         
         dist = []
@@ -239,7 +237,7 @@ def find_best_params_all_contexts():
 
 def best_param_from_multiple_runs(context_name):
     '''
-    Find best param over multiple trails
+    Find best param over multiple trials
     '''
     mean = {}
     std = {}
