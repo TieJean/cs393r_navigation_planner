@@ -85,4 +85,4 @@ if __name__ == '__main__':
             os.system(UTIL_DIR + "parse_rosbag.sh -d " + directory_name + " -f " + filename)
         
     ground_truth = get_ground_truth()
-    eval(ground_truth, autotune=False)
+    eval(ground_truth, autotune=True)

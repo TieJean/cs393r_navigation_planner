@@ -350,8 +350,8 @@ void ParticleFilter::Initialize(const string& map_file,
   // Sample particles from a gaussian around loc and angle
   particles_.clear();
   for (size_t i = 0; i < FLAGS_num_particles; i++) {
-    float x = rng_.Gaussian(-32, CONFIG_MOTION_X_STD_DEV);
-    float y = rng_.Gaussian(20, CONFIG_MOTION_Y_STD_DEV);
+    float x = rng_.Gaussian(loc.x(), CONFIG_MOTION_X_STD_DEV);
+    float y = rng_.Gaussian(loc.y(), CONFIG_MOTION_Y_STD_DEV);
     float a = rng_.Gaussian(angle, CONFIG_MOTION_A_STD_DEV);
     a = a > M_PI ? a - 2 * M_PI : (a <= -M_PI ? a + 2 * M_PI : a);
 
