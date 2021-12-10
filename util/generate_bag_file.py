@@ -12,7 +12,7 @@ BAG_DIR = "new_bag/" # output directory
 LUA_DIR = os.path.expanduser("~") + "/ut_automata/config/"
 LUA_FILENAME = 'simulator.lua'
 UT_AUTOMATA_DIR = os.path.expanduser("~") + "/ut_automata/"
-MAP_DIR = os.path.expanduser("~") + "/amrl_maps/GDC1/"
+MAP_DIR = os.path.expanduser("~") + "/amrl_libraries/amrl_maps/GDC1/"
 MAP_FILENAME = 'GDC1.vectormap.txt'
 
 def change_lua(laser_noise_stddev, angular_drift_rate, angular_error_rate):
@@ -120,14 +120,14 @@ if __name__ == '__main__':
     angular_error_rate_max = 45.0  # absolute value
     angular_error_rate_cutoff = 10.0  # absolute value
     '''
-    laser_noise_stddev = [0, 0.02, 0.07, 0.1]
+    laser_noise_stddev = [0.01]
     # angular_drift_rate = [0, 0.2, 1.0, 2.5]
     # angular_error_rate = [0, 5.0, 20.0, 45.0]
-    obstacle_map = [NO_OBSTACLES, SOME_OBSTACLES, MANY_OBSTACLES, FULL_OBSTACLES]
+    # obstacle_map = [NO_OBSTACLES, SOME_OBSTACLES, MANY_OBSTACLES, FULL_OBSTACLES]
     # laser_noise_stddev = [0]
-    angular_drift_rate = [0]
-    angular_error_rate = [0]
-    # obstacle_map = [NO_OBSTACLES]
+    angular_drift_rate = [2.0]
+    angular_error_rate = [30.0]
+    obstacle_map = [NO_OBSTACLES]
 
     print("Generating bag files ...")
     generate_bagfiles(laser_noise_stddev, angular_drift_rate, angular_error_rate, obstacle_map)

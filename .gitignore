@@ -10,3 +10,5 @@ GDC1/
 util/venv
 util/__pycache__/
 util/checkpoints
+new_bag/
+bag_eval/

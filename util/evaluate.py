@@ -53,7 +53,7 @@ def eval(ground_truth, autotune=False):
             os.chdir(UTIL_DIR)
             os.system("./generate_pf_file.sh -d " + directory_name + " -f " + filename + " -p " + prefix)
             os.chdir(UTIL_DIR)
-            os.system("./read_rosbag.sh -d " + directory_name + " -f " + prefix + filename)
+            os.system("./parse_rosbag.sh -d " + directory_name + " -f " + prefix + filename)
 
             locs_pf = yaml2dict(EVALBAG_DIR + prefix + filename + ".yaml", directory=EVALBAG_DIR)
 
@@ -67,8 +67,9 @@ def eval(ground_truth, autotune=False):
 
 
 if __name__ == '__main__':
-    EVALBAG_DIR = os.getcwd() + "/" + directory_name + "/"
-    UTIL_DIR = os.getcwd() + "/util/"
+    EVALBAG_DIR = os.getcwd() + "/../" + directory_name + "/"
+    UTIL_DIR = os.getcwd() + "/"
+    # print(EVALBAG_DIR, UTIL_DIR)
 
     if (False):
         generate_bagfiles(laser_noise_stddev = [0],
@@ -81,7 +82,7 @@ if __name__ == '__main__':
         for filename in os.listdir(EVALBAG_DIR):
             if filename[:2] == "pf" or filename[:4] == "auto" or filename.endswith(".yaml"):
                 continue
-            os.system(UTIL_DIR + "read_rosbag.sh -d " + directory_name + " -f " + filename)
+            os.system(UTIL_DIR + "parse_rosbag.sh -d " + directory_name + " -f " + filename)
         
     ground_truth = get_ground_truth()
     eval(ground_truth, autotune=True)
