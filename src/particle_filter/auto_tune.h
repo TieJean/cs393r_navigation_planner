@@ -71,14 +71,15 @@ private:
   // loads in the best params for each context from best_params.txt
   void LoadContexts_();
   // detects whether the current context is high or low observation noise
-  Parameter DetectObservationContext_(const vector_map::VectorMap& map,
+  bool DetectObservationContext_(const vector_map::VectorMap& map,
                                       const Vector2f& loc,
                                       const float angle,
                                       const vector<float>& ranges,
                                       float range_min,
                                       float range_max,
                                       float angle_min,
-                                      float angle_max);
+                                      float angle_max,
+                                      float* std);
   // detects whether the current context is high or low motion noise
   Parameter DetectMotionContext_(const vector_map::VectorMap& map,
                                  const Vector2f& loc,
@@ -89,7 +90,7 @@ private:
                                  float angle_min,
                                  float angle_max);
   // detects whether the current context has many or few obstacles 
-  Parameter DetectObstacleContext_(const vector_map::VectorMap& map,
+  bool DetectObstacleContext_(const vector_map::VectorMap& map,
                                    const Vector2f& loc,
                                    const float angle,
                                    const vector<float>& ranges,

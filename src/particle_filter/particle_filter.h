@@ -118,7 +118,7 @@ class ParticleFilter {
   bool updated;
 
   // auto-tuned params
-  bool auto_tune = true;
+  bool auto_tune = false;
   float CONFIG_SENSOR_STD_DEV = 0.1;
   float CONFIG_D_SHORT = 0.1 * 1.5;
   float CONFIG_D_LONG = 0.1 * 2.0;

@@ -61,61 +61,23 @@ Parameter AutoTune::DetectContext(const vector_map::VectorMap& map,
                                   float range_max,
                                   float angle_min,
                                   float angle_max) {
-  return DetectObservationContext_(map, loc, angle, ranges, range_min, range_max, angle_min, angle_max);
-  // return DetectObstacleContext_(map, loc, angle, ranges, range_min, range_max, angle_min, angle_max);
-  // return DetectMotionContext_(map, loc, angle, ranges, range_min, range_max, angle_min, angle_max);
-  // TODO: add obstacle and motion noises
-  // seperate obstabcles vs walls
-  // for all obstacles: DetectObstacleContext_()
-  // for point clouds on walls: 
-
-  // float angle_step = (angle_max - angle_min) / ranges.size();
-  // // segment points from scan
-  // size_t segments = (angle_max - angle_min) / (M_PI / 180 * 5);
-  // size_t segment_size = ranges.size() / segments;
-  // float sum_stddev = 0.0;
-  // segments = 0;
-  // size_t num_obstacles = 0;
-  // float angle_i;
-  // for (size_t start = 0; start < ranges.size(); start += segment_size) {
-  //   size_t end = start + segment_size > ranges.size() ? ranges.size() : start + segment_size;
-  //   sum_stddev += getPointDistStddev_(map, loc, angle, ranges, range_min, range_max, angle_step, start, end);
-    // for (size_t i = start; i < end; i += DOWNSAMPLE_RATE) {
-    //   angle_i = angle_min + i * angle_step;
-    //   float dist = CalculateDistanceToWall_(map, loc, angle, angle_i, ranges[i], range_min, range_max);
-    //   if (dist != -1 && dist >= OBSTACLE_DIST_CUTOFF)
-    //     num_obstacles++;
-      
-    // }
-  //   ++segments;
-  // }
-  // bool observation = sum_stddev / segments >= OBSERVATION_CUTOFF;
-  // bool obstacle = (float) num_obstacles / (ranges.size() / DOWNSAMPLE_RATE) >= OBSTACLE_CUTOFF;
-  // if (!observation && !obstacle) {
-  //   // LS_LM_LO
-  //   return contexts[0].param;
-  // } else if (observation && !obstacle) {
-  //   // HS_LM_LO
-  //   return contexts[4].param;
-  // } else if (!observation && obstacle) {
-  //   // LS_LM_HO
-  //   // cout << "LS_LM_HO" << endl;
-  //   return contexts[1].param;
-  // } else {
-  //   // HS_LM_HO
-  //   // cout << "HS_LM_HO" << endl;
-  //   return contexts[5].param;
-  // }
+  float std;
+  bool isHighObservation, isHighObstable;
+  isHighObservation = DetectObservationContext_(map, loc, angle, ranges, range_min, range_max, angle_min, angle_max, &std);
+  // OBSTACLE_DIST_CUTOFF   = 2.5 * std;
+  isHighObstable    = DetectObstacleContext_(map, loc, angle, ranges, range_min, range_max, angle_min, angle_max);
+  if (!isHighObservation && !isHighObstable) {
+    return contexts[2].param;
+  } else if (!isHighObservation && isHighObstable) {
+    return contexts[3].param;
+  } else if (isHighObservation && !isHighObstable) {
+    return contexts[6].param;
+  } else if (isHighObservation && isHighObstable) {
+    return contexts[7].param;
+  }
+  return contexts[0].param;
 }
 
-/*
-VectorXf linearRegression(const VectorXf& x, const VectorXf& y, size_t length) {
-  VectorXf ones(length);
-  MatrixXf A(ones, x);
-  // return A.colPivHouseholderQr().solve(y);
-  return A.fullPivHouseholderQr().solve(y); // slow but stable
-}
-*/
 
 /*
  * loc_ab and angle_ab is the position of frame A in frame B.
@@ -133,14 +95,15 @@ void TransformAToB(const Vector2f& loc_ab, float angle_ab,
   new_angle = angle_ab + angle_pa;
 }
 
-Parameter AutoTune::DetectObservationContext_(const vector_map::VectorMap& map,
+bool AutoTune::DetectObservationContext_(const vector_map::VectorMap& map,
                                               const Vector2f& loc,
                                               const float angle,
                                               const vector<float>& ranges,
                                               float range_min,
                                               float range_max,
                                               float angle_min,
-                                              float angle_max) {  
+                                              float angle_max,
+                                              float* std_ptr) {  
   float angle_step = (angle_max - angle_min) / ranges.size();
   
   // segment points from scan
@@ -177,14 +140,17 @@ Parameter AutoTune::DetectObservationContext_(const vector_map::VectorMap& map,
   }
   // cout << "sum_stddev: " << sum_stddev << " num: " << (size_t) (stddevs.size() * percentage) << endl;
   // cout << "final std: " << sum_stddev / (end_index - start_index) << endl;
+  *std_ptr = sum_stddev / (end_index - start_index);
   if (sum_stddev / (end_index - start_index) < OBSERVATION_CUTOFF) {
     // LS_LM_LO
     // cout << "LS_LM_LO" << endl;
-    return contexts[0].param;
+    // return contexts[0].param;
+    return false;
   } else {
     // HS_LM_LO
     // cout << "HS_LM_LO" << endl;
-    return contexts[4].param;
+    // return contexts[4].param;
+    return true;
   }
 }
 
@@ -367,7 +333,7 @@ Parameter AutoTune::DetectMotionContext_(const vector_map::VectorMap& map,
   }
 }
 
-Parameter AutoTune::DetectObstacleContext_(const vector_map::VectorMap& map,
+bool AutoTune::DetectObstacleContext_(const vector_map::VectorMap& map,
                                            const Vector2f& loc,
                                            const float angle,
                                            const vector<float>& ranges,
@@ -391,11 +357,13 @@ Parameter AutoTune::DetectObstacleContext_(const vector_map::VectorMap& map,
   if ((float) num_obstacles / (ranges.size() / DOWNSAMPLE_RATE) < OBSTACLE_CUTOFF) {
     // LS_LM_LO
     // cout << "LS_LM_LO" << endl;
-    return contexts[0].param;
+    // return contexts[0].param;
+    return false;
   } else {
     // LS_LM_HO
     // cout << "LS_LM_HO" << endl;
-    return contexts[1].param;
+    // return contexts[1].param;
+    return true;
   }
 }
 
